@@ -31,11 +31,15 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import com.google.firebase.auth.FirebaseAuth;
+
 import android.widget.Toast;
+
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseUser;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -56,7 +60,6 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
     private EditText mConfirmPasswordView;
     private View mProgressView;
     private View mLoginFormView;
-    private Button btnLogIn;
     private FirebaseAuth mAuth;
 
     @Override
@@ -66,9 +69,9 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
         populateAutoComplete();
-        btnLogIn = (Button) findViewById(R.id.log_in_button);
+        Button btnLogIn = (Button) findViewById(R.id.log_in_button);
         mPasswordView = (EditText) findViewById(R.id.password);
-        mConfirmPasswordView = (EditText) findViewById(R.id.confirm_password) ;
+        mConfirmPasswordView = (EditText) findViewById(R.id.confirm_password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
@@ -173,12 +176,12 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
         View focusView = null;
 
         // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
+        if (TextUtils.isEmpty(password) || !isPasswordValid(password)) {
             mPasswordView.setError(getString(R.string.error_invalid_password));
             focusView = mPasswordView;
             cancel = true;
         }
-        if (!TextUtils.isEmpty(confirmpassword) && !password.equals(confirmpassword)) {
+        if (TextUtils.isEmpty(confirmpassword) || !confirmpassword.equals(password)) {
             mConfirmPasswordView.setError(getString(R.string.error_incorrect_password));
             focusView = mConfirmPasswordView;
             cancel = true;
@@ -203,7 +206,7 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            if (password.equals(confirmpassword)){
+            if (!password.equals(confirmpassword)) return;
             mAuth = FirebaseAuth.getInstance();
             mAuth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
@@ -212,15 +215,19 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
                             if (!task.isSuccessful()) {
                                 Toast.makeText(SignUpActivity.this, R.string.auth_failed,
                                         Toast.LENGTH_SHORT).show();
-                            }else{
-                                Toast.makeText(SignUpActivity.this, R.string.auth_success,
-                                        Toast.LENGTH_SHORT).show();
-                                startActivity(new Intent(SignUpActivity.this, MainActivity.class));
-                                finish();
+                            } else {
+                                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                                if (user != null) {
+                                    user.sendEmailVerification();
+                                    mAuth.signOut();
+                                    Toast.makeText(SignUpActivity.this, "Verified mail has been send",
+                                            Toast.LENGTH_SHORT).show();
+                                    startActivity(new Intent(SignUpActivity.this, LoginActivity.class));
+                                    finish();
+                                }
                             }
                         }
                     });
-            }
         }
     }
 

@@ -18,6 +18,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -30,13 +31,18 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import android.content.Intent;
 
 import com.google.firebase.auth.FirebaseAuth;
+
 import android.widget.Toast;
+
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseUser;
+
 import static android.Manifest.permission.READ_CONTACTS;
 
 /**
@@ -60,7 +66,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
-    private Button btnSignup,btnReset;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,8 +75,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
         populateAutoComplete();
 
-        btnSignup = (Button) findViewById(R.id.btn_signup);
-        btnReset = (Button) findViewById(R.id.btn_reset_password);
+        Button btnSignup = (Button) findViewById(R.id.btn_signup);
+        Button btnReset = (Button) findViewById(R.id.btn_reset_password);
 
         mPasswordView = (EditText) findViewById(R.id.password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -103,12 +109,13 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             }
         });
 
-       /* btnReset.setOnClickListener(new View.OnClickListener() {
+        btnReset.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(LoginActivity.this, ResetPasswordActivity.class));
+                String Email = mEmailView.getText().toString();
+                sendResetEmail(Email);
             }
-        });*/
+        });
     }
 
     private void populateAutoComplete() {
@@ -154,6 +161,26 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         }
     }
 
+    private void sendResetEmail(String Email) {
+
+        if (Email.isEmpty()) {
+            mEmailView.setError(getString(R.string.error_field_required));
+            mEmailView.requestFocus();
+            return;
+        }
+        auth = FirebaseAuth.getInstance();
+        auth.sendPasswordResetEmail(Email)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            Toast.makeText(LoginActivity.this, "We have sent you instructions to reset your password!", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(LoginActivity.this, "Failed to send reset email!", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
 
     /**
      * Attempts to sign in or register the account specified by the login form.
@@ -175,7 +202,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         View focusView = null;
 
         // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
+        if (TextUtils.isEmpty(password) || !isPasswordValid(password)) {
             mPasswordView.setError(getString(R.string.error_invalid_password));
             focusView = mPasswordView;
             cancel = true;
@@ -201,25 +228,34 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // perform the user login attempt.
             showProgress(true);
             //mAuthTask = new UserLoginTask(email, password);
-           // mAuthTask.execute((Void) null);
+            // mAuthTask.execute((Void) null);
             auth = FirebaseAuth.getInstance();
             auth.signInWithEmailAndPassword(email, password)
                     .addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()) {
-                                Toast.makeText(LoginActivity.this, R.string.auth_success,
-                                        Toast.LENGTH_SHORT).show();
+                                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                                if (user != null) {
+                                    if (user.isEmailVerified()) {
+                                        Toast.makeText(LoginActivity.this, R.string.auth_success,
+                                                Toast.LENGTH_SHORT).show();
+                                        startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                        finish();
+                                    } else {
+                                        Toast.makeText(LoginActivity.this, "Email hasn't been verified",
+                                                Toast.LENGTH_SHORT).show();
+                                    }
+                                }
                                 showProgress(false);
-                                startActivity(new Intent(LoginActivity.this , MainActivity.class));
-                                finish();
-                            }else{
+                            } else {
                                 Toast.makeText(LoginActivity.this, R.string.auth_failed,
                                         Toast.LENGTH_SHORT).show();
                                 showProgress(false);
                             }
                         }
                     });
+
         }
     }
 

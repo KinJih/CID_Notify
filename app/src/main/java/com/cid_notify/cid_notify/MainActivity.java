@@ -16,11 +16,17 @@ import android.content.Intent;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
-import android.widget.TextView;
-import java.util.ArrayList;
-import java.util.List;
 
-import android.util.Log;
+import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Calendar;
+import java.text.SimpleDateFormat;
+
+import com.gavin.com.library.listener.GroupListener;
+import com.gavin.com.library.StickyDecoration;
+
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,11 +34,12 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 
-public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private String mail;
+    final ArrayList<Record> myDataSet = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +47,8 @@ public class MainActivity extends AppCompatActivity
         final RecyclerView mList = (RecyclerView) findViewById(R.id.my_recycler_view);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+
         /*FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -60,11 +69,32 @@ public class MainActivity extends AppCompatActivity
 
         mList.hasFixedSize();
         mList.setNestedScrollingEnabled(true);
-        mList.setLayoutManager(new LinearLayoutManager(this));
+        mList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
 
+        Calendar c = Calendar.getInstance();
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        final String formatToday = df.format(c.getTime());
+        c.add(Calendar.DATE, -1);
+        final String formatYesterday = df.format(c.getTime());
 
+        StickyDecoration decoration = StickyDecoration.Builder
+                .init(new GroupListener() {
+                    @Override
+                    public String getGroupName(int position) {
+                        if (myDataSet.size() > position) {
+                            String recordDate = myDataSet.get(position).getDate();
+                            return recordDate.equals(formatToday) ? "Today" : recordDate.equals(formatYesterday) ? "Yesterday" : recordDate;
+                        }
+                        return null;
+                    }
+                })
+                .setGroupBackground(getResources().getColor(R.color.lightGray))
+                .setGroupTextColor(getResources().getColor(R.color.colorPrimaryDark))
+                .setGroupHeight(150)
+                .setGroupTextSize(70)
+                .build();
+        mList.addItemDecoration(decoration);
 
-        Toast.makeText(MainActivity.this, "loading...", Toast.LENGTH_SHORT).show();
         mAuth = FirebaseAuth.getInstance();
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
@@ -75,28 +105,29 @@ public class MainActivity extends AppCompatActivity
                     finish();
                 } else {
                     mail = user.getEmail();
+                    Toast.makeText(MainActivity.this, "loading...", Toast.LENGTH_SHORT).show();
+                    DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference("members");
+                    reference_contacts.orderByChild("date").addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            Toast.makeText(MainActivity.this, R.string.failed, Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            for (DataSnapshot ds : dataSnapshot.getChildren()) {
+                                Record record = ds.getValue(Record.class);
+                                myDataSet.add(record);
+                            }
+                            Collections.reverse(myDataSet);
+                            MyAdapter myAdapter = new MyAdapter(myDataSet);
+                            mList.setAdapter(myAdapter);
+                            Toast.makeText(MainActivity.this, R.string.success, Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 }
             }
         };
-
-        final ArrayList<Record> myDataSet = new ArrayList<>();
-        DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference("members");
-        reference_contacts.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Toast.makeText(MainActivity.this, "can't loading...", Toast.LENGTH_SHORT).show();
-            }
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot ds : dataSnapshot.getChildren() ){
-                   Record record = ds.getValue(Record.class);
-                    myDataSet.add(record);
-                }
-                MyAdapter myAdapter = new MyAdapter(myDataSet);
-                mList.setAdapter(myAdapter);
-                Toast.makeText(MainActivity.this, "success", Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     @Override
@@ -145,10 +176,11 @@ public class MainActivity extends AppCompatActivity
 
         } else if (id == R.id.nav_slideshow) {
 
-        } else if (id == R.id.nav_manage) {
-
         } else if (id == R.id.nav_settings) {
 
+        } else if (id == R.id.nav_update_password) {
+            startActivity(new Intent(MainActivity.this, UpdatePasswordActivity.class));
+            finish();
         } else if (id == R.id.nav_logout) {
             mAuth.signOut();
         }
@@ -175,6 +207,7 @@ public class MainActivity extends AppCompatActivity
 
     public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
         private ArrayList<Record> mData;
+
         public MyAdapter(ArrayList<Record> mData) {
             this.mData = mData;
         }
@@ -190,10 +223,11 @@ public class MainActivity extends AppCompatActivity
                 mTextNumber = (TextView) v.findViewById(R.id.text_phone_number);
                 mTextPerson = (TextView) v.findViewById(R.id.text_person);
             }
-            public void setValues(Record record){
+
+            public void setValues(Record record) {
                 mTextNumber.setText(record.getPhoneNum());
                 mTextPerson.setText(record.getNumber_info());
-                mTextTime.setText(record.getDate() +"   "+ record.getTime());
+                mTextTime.setText(record.getTime());
             }
         }
 
@@ -213,7 +247,7 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         public int getItemCount() {
-            return mData==null? 0 : mData.size();
+            return mData == null ? 0 : mData.size();
         }
     }
 

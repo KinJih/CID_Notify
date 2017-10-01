@@ -41,6 +41,9 @@
         <activity
             android:name=".SignUpActivity"
             android:label="@string/title_activity_sign_up" />
+        <activity
+            android:name=".UpdatePasswordActivity"
+            android:label="@string/action_update_password"/>
     </application>
 
 </manifest>
