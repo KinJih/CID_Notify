@@ -5,10 +5,12 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.content.Intent;
@@ -16,7 +18,6 @@ import android.content.Intent;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
-
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import java.text.SimpleDateFormat;
 
 import com.gavin.com.library.listener.GroupListener;
 import com.gavin.com.library.StickyDecoration;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -34,21 +36,29 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 
-public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener{
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private String mail;
+    private RecyclerView mList;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
     final ArrayList<Record> myDataSet = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        final RecyclerView mList = (RecyclerView) findViewById(R.id.my_recycler_view);
+        mList = (RecyclerView) findViewById(R.id.my_recycler_view);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh_layout);
         setSupportActionBar(toolbar);
 
-
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                getData();
+            }
+        });
         /*FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -57,7 +67,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         .setAction("Action", null).show();
             }
         });*/
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -70,6 +79,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         mList.hasFixedSize();
         mList.setNestedScrollingEnabled(true);
         mList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+
+        mAuth = FirebaseAuth.getInstance();
+        mAuthListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                if (user == null) {
+                    startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                    finish();
+                } else {
+                    mail = user.getEmail();
+                    getData();
+                }
+            }
+        };
 
         Calendar c = Calendar.getInstance();
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
@@ -94,42 +118,33 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 .setGroupTextSize(70)
                 .build();
         mList.addItemDecoration(decoration);
-
-        mAuth = FirebaseAuth.getInstance();
-        mAuthListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                if (user == null) {
-                    startActivity(new Intent(MainActivity.this, LoginActivity.class));
-                    finish();
-                } else {
-                    mail = user.getEmail();
-                    Toast.makeText(MainActivity.this, "loading...", Toast.LENGTH_SHORT).show();
-                    DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference("members");
-                    reference_contacts.orderByChild("date").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-                            Toast.makeText(MainActivity.this, R.string.failed, Toast.LENGTH_SHORT).show();
-                        }
-
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            for (DataSnapshot ds : dataSnapshot.getChildren()) {
-                                Record record = ds.getValue(Record.class);
-                                myDataSet.add(record);
-                            }
-                            Collections.reverse(myDataSet);
-                            MyAdapter myAdapter = new MyAdapter(myDataSet);
-                            mList.setAdapter(myAdapter);
-                            Toast.makeText(MainActivity.this, R.string.success, Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-            }
-        };
     }
+    public void getData(){
+        mSwipeRefreshLayout.setRefreshing(true);
+        //Toast.makeText(MainActivity.this, "loading...", Toast.LENGTH_SHORT).show();
+        DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference("members");
+        reference_contacts.orderByChild("date").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Toast.makeText(MainActivity.this, R.string.failed, Toast.LENGTH_SHORT).show();
+            }
 
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                myDataSet.clear();
+                for (DataSnapshot ds : dataSnapshot.getChildren()) {
+                    Record record = ds.getValue(Record.class);
+                    myDataSet.add(record);
+                }
+                Collections.reverse(myDataSet);
+                MyAdapter myAdapter = new MyAdapter(myDataSet);
+                mList.setAdapter(myAdapter);
+                mSwipeRefreshLayout.setRefreshing(false);
+               // Toast.makeText(MainActivity.this, R.string.success, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+    }
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -180,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         } else if (id == R.id.nav_update_password) {
             startActivity(new Intent(MainActivity.this, UpdatePasswordActivity.class));
-            finish();
+            //finish();
         } else if (id == R.id.nav_logout) {
             mAuth.signOut();
         }

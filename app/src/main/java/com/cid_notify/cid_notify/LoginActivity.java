@@ -42,6 +42,9 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -240,6 +243,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                                     if (user.isEmailVerified()) {
                                         Toast.makeText(LoginActivity.this, R.string.auth_success,
                                                 Toast.LENGTH_SHORT).show();
+                                        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("Device");
+                                        databaseReference.child("token").setValue(FirebaseInstanceId.getInstance().getToken());
                                         startActivity(new Intent(LoginActivity.this, MainActivity.class));
                                         finish();
                                     } else {

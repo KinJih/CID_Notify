@@ -2,6 +2,8 @@ package com.cid_notify.cid_notify;
 
 import android.util.Log;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.FirebaseInstanceIdService;
 
@@ -17,5 +19,7 @@ public class MyFirebaseInstanceIdService extends FirebaseInstanceIdService{
     }
     private void sendRegistrationToServer(String refreshedToken){
         //todo
+        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("Device");
+        databaseReference.child("token").setValue(refreshedToken);
     }
 }
