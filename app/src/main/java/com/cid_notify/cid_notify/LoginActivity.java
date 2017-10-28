@@ -4,16 +4,15 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.content.pm.PackageManager;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.app.LoaderManager.LoaderCallbacks;
-
 import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
-
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -29,15 +28,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
-
 import android.content.Intent;
-
 import com.google.firebase.auth.FirebaseAuth;
-
 import android.widget.Toast;
-
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -241,10 +238,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                                 if (user != null) {
                                     if (user.isEmailVerified()) {
-                                        Toast.makeText(LoginActivity.this, R.string.auth_success,
-                                                Toast.LENGTH_SHORT).show();
-                                        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("Device");
-                                        databaseReference.child("token").setValue(FirebaseInstanceId.getInstance().getToken());
+                                        Toast.makeText(LoginActivity.this, R.string.auth_success, Toast.LENGTH_SHORT).show();
+
+                                        writeDataBase(user);
                                         startActivity(new Intent(LoginActivity.this, MainActivity.class));
                                         finish();
                                     } else {
@@ -262,6 +258,16 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     });
 
         }
+    }
+    private void writeDataBase(FirebaseUser user){
+        Calendar c = Calendar.getInstance();
+        String SID = Build.SERIAL +"_"+ Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(user.getUid());
+        databaseReference.child("E-Mail").setValue(user.getEmail());
+        databaseReference.child("Devices").child(SID).child("Token").setValue(FirebaseInstanceId.getInstance().getToken());
+        databaseReference.child("Devices").child(SID).child("Model").setValue(Build.MODEL);
+        databaseReference.child("Devices").child(SID).child("Last_Login").setValue(df.format(c.getTime()));
     }
 
     private boolean isEmailValid(String email) {

@@ -1,7 +1,10 @@
 package com.cid_notify.cid_notify;
 
+import android.os.Build;
+import android.provider.Settings;
 import android.util.Log;
-
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.iid.FirebaseInstanceId;
@@ -19,7 +22,11 @@ public class MyFirebaseInstanceIdService extends FirebaseInstanceIdService{
     }
     private void sendRegistrationToServer(String refreshedToken){
         //todo
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("Device");
-        databaseReference.child("token").setValue(refreshedToken);
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if(user!=null){
+            String SID = Build.SERIAL +"_"+ Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(user.getUid());
+            databaseReference.child(SID).setValue(refreshedToken);
+        }
     }
 }
