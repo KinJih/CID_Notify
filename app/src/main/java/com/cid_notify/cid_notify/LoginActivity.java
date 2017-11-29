@@ -261,7 +261,12 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     }
     private void writeDataBase(FirebaseUser user){
         Calendar c = Calendar.getInstance();
-        String SID = Build.SERIAL +"_"+ Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        String SID;
+        if(Build.SERIAL.equals("unknown")){
+            SID = "Oreo_"+Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        }else{
+            SID = Build.SERIAL;
+        }
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(user.getUid());
         databaseReference.child("E-Mail").setValue(user.getEmail());

@@ -24,7 +24,12 @@ public class MyFirebaseInstanceIdService extends FirebaseInstanceIdService{
         //todo
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if(user!=null){
-            String SID = Build.SERIAL +"_"+ Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+            String SID;
+            if(Build.SERIAL.equals("unknown")){
+                SID = "Oreo_"+Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+            }else{
+                SID = Build.SERIAL;
+            }
             DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(user.getUid());
             databaseReference.child(SID).setValue(refreshedToken);
         }

@@ -1,5 +1,7 @@
 package com.cid_notify.cid_notify;
 
+import android.content.Context;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -13,16 +15,16 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.content.Intent;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
 
-import android.widget.Filter;
-import android.widget.Filterable;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -32,17 +34,14 @@ import java.text.SimpleDateFormat;
 
 import com.gavin.com.library.listener.GroupListener;
 import com.gavin.com.library.StickyDecoration;
-
 import android.support.v7.widget.RecyclerView;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Toast;
 
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
+    private FirebaseUser user;
     private String mail;
     private RecyclerView mList;
     private SwipeRefreshLayout mSwipeRefreshLayout;
@@ -57,13 +56,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh_layout);
         setSupportActionBar(toolbar);
-
-        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                getData();
-            }
-        });
+        mList.setAdapter(myAdapter);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -77,12 +70,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         mList.hasFixedSize();
         mList.setNestedScrollingEnabled(true);
         mList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-
         mAuth = FirebaseAuth.getInstance();
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
+                user = firebaseAuth.getCurrentUser();
                 if (user == null) {
                     startActivity(new Intent(MainActivity.this, LoginActivity.class));
                     finish();
@@ -94,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             }
         };
 
-        Calendar c = Calendar.getInstance();
+        final Calendar c = Calendar.getInstance();
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
         final String formatToday = df.format(c.getTime());
         c.add(Calendar.DATE, -1);
@@ -117,8 +109,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 .setGroupTextSize(DensityUtil.sp2px(this, 20))
                 .build();
         mList.addItemDecoration(decoration);
+        mList.addOnItemTouchListener(
+                new RecyclerItemClickListener(MainActivity.this, mList ,new RecyclerItemClickListener.OnItemClickListener() {
+                    @Override public void onItemClick(View view, int position) {
+                        // do whatever
+                        Uri uri = Uri.parse("https://whoscall.com/zh-TW/tw/"+myDataSet.get(position).getPhoneNum());
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                        startActivity(intent);
+                    }
+
+                    @Override public void onLongItemClick(View view, int position) {
+                        // do whatever
+                    }
+                })
+        );
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                getData();
+            }
+        });
     }
-    //???
+
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -129,8 +141,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Log.d("RDB", "ReadDB");
         mSwipeRefreshLayout.setRefreshing(true);
         //Toast.makeText(MainActivity.this, "loading...", Toast.LENGTH_SHORT).show();
-        DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference("members");
-        reference_contacts.orderByChild("date").addListenerForSingleValueEvent(new ValueEventListener() {
+        DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference(user.getUid());
+        reference_contacts.child("Records").orderByChild("date").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 Toast.makeText(MainActivity.this, R.string.failed, Toast.LENGTH_SHORT).show();
@@ -205,7 +217,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         int id = item.getItemId();
 
         if (id == R.id.nav_settings) {
+            Uri uri = Uri.parse("https://whoscall.com/zh-TW/tw/076011000");
 
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            startActivity(intent);
         } else if (id == R.id.nav_update_password) {
             startActivity(new Intent(MainActivity.this, UpdatePasswordActivity.class));
             //finish();
@@ -233,83 +248,4 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> implements Filterable {
-        private ArrayList<Record> mData;
-        private ArrayList<Record> mFilterData;
-
-        public MyAdapter(ArrayList<Record> mData) {
-            this.mData = mData;
-            mFilterData=mData;
-        }
-
-        @Override
-        public Filter getFilter() {
-            return new Filter() {
-                @Override
-                protected FilterResults performFiltering(CharSequence charSequence) {
-                    String charString = charSequence.toString().toLowerCase();
-                    if (charString.isEmpty()) {
-                        mFilterData = mData;
-                    } else {
-                        ArrayList<Record> filteredList = new ArrayList<>();
-                        for (Record record : mData) {
-                            if (record.getPhoneNum().toLowerCase().contains(charString) || record.getDate().toLowerCase().contains(charString) || record.getNumber_info().toLowerCase().contains(charString)) {
-                                filteredList.add(record);
-                            }
-                        }
-                        mFilterData = filteredList;
-                    }
-                    FilterResults filterResults = new FilterResults();
-                    filterResults.values = mFilterData;
-                    filterResults.count=mFilterData.size();
-                    return filterResults;
-                }
-                @Override
-                protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
-                    mFilterData=(ArrayList<Record>) filterResults.values;
-                    notifyDataSetChanged();
-                }
-            };
-        }
-
-        public class ViewHolder extends RecyclerView.ViewHolder {
-            public TextView mTextTime;
-            public TextView mTextNumber;
-            public TextView mTextPerson;
-
-            public ViewHolder(View v) {
-                super(v);
-                mTextTime = (TextView) v.findViewById(R.id.text_time);
-                mTextNumber = (TextView) v.findViewById(R.id.text_phone_number);
-                mTextPerson = (TextView) v.findViewById(R.id.text_person);
-            }
-
-            public void setValues(Record record) {
-                mTextNumber.setText(record.getPhoneNum());
-                mTextPerson.setText(record.getNumber_info());
-                mTextTime.setText(record.getTime());
-            }
-        }
-
-        @Override
-        public MyAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View v = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.card_style, parent, false);
-            ViewHolder vh = new ViewHolder(v);
-            return vh;
-        }
-
-        @Override
-        public void onBindViewHolder(ViewHolder holder, int position) {
-            Record record = mFilterData.get(position);
-            holder.setValues(record);
-        }
-
-        @Override
-        public int getItemCount() {
-            return mFilterData==null?0:mFilterData.size();
-        }
-    }
-
 }
-
