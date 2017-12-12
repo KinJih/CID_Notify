@@ -1,6 +1,5 @@
 package com.cid_notify.cid_notify;
 
-import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -15,18 +14,14 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.content.Intent;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
-
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Calendar;
@@ -42,10 +37,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private FirebaseUser user;
-    private String mail;
     private RecyclerView mList;
     private SwipeRefreshLayout mSwipeRefreshLayout;
-    final ArrayList<Record> myDataSet = new ArrayList<>();
+    private ArrayList<Record> myDataSet = new ArrayList<>();
     private MyAdapter myAdapter;
 
     @Override
@@ -56,7 +50,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh_layout);
         setSupportActionBar(toolbar);
-        mList.setAdapter(myAdapter);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -70,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         mList.hasFixedSize();
         mList.setNestedScrollingEnabled(true);
         mList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        myAdapter = new MyAdapter(myDataSet);
         mAuth = FirebaseAuth.getInstance();
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
@@ -79,9 +73,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     startActivity(new Intent(MainActivity.this, LoginActivity.class));
                     finish();
                 } else {
-                    mail = user.getEmail();
                     getData();
-
                 }
             }
         };
@@ -96,8 +88,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 .init(new GroupListener() {
                     @Override
                     public String getGroupName(int position) {
-                        if (myDataSet.size() > position) {
-                            String recordDate = myDataSet.get(position).getDate();
+                        if (myAdapter.getmFilterData().size() > position) {
+                            String recordDate = myAdapter.getmFilterData().get(position).getDate();
                             return recordDate.equals(formatToday) ? "Today" : recordDate.equals(formatYesterday) ? "Yesterday" : recordDate;
                         }
                         return null;
@@ -156,7 +148,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     myDataSet.add(record);
                 }
                 Collections.reverse(myDataSet);
-                myAdapter = new MyAdapter(myDataSet);
                 mList.setAdapter(myAdapter);
                 mSwipeRefreshLayout.setRefreshing(false);
                 // Toast.makeText(MainActivity.this, R.string.success, Toast.LENGTH_SHORT).show();
@@ -179,7 +170,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         TextView mailTextView = (TextView) findViewById(R.id.textView);
-        mailTextView.setText(mail);
+        mailTextView.setText(user==null?"":user.getEmail());
 
         MenuItem search = menu.findItem(R.id.search);
         SearchView searchView = (SearchView) MenuItemCompat.getActionView(search);
@@ -247,5 +238,4 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             mAuth.removeAuthStateListener(mAuthListener);
         }
     }
-
 }

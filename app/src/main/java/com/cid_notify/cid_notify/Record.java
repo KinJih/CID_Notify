@@ -1,13 +1,13 @@
 package com.cid_notify.cid_notify;
 
-
-
 public class Record {
-    String phoneNum;
-    String number_info;
-    String time;
-    String date;
+    private String phoneNum;
+    private String number_info;
+    private String time;
+    private String date;
+    private String to;
 
+    public String getTo() {return to;}
     public String getNumber_info() {
         return number_info;
     }
