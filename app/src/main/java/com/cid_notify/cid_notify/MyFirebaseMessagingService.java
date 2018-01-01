@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import com.google.firebase.messaging.FirebaseMessagingService;
@@ -25,12 +26,15 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
             Log.d("MT", "Message data payload: " + remoteMessage.getData());
+            String body = "From : "+remoteMessage.getData().get("phoneNum")+"\nTo : "+remoteMessage.getData().get("CallTo");
+            String title = "New calls : "+remoteMessage.getData().get("number_info");
+            sendNotification(body,title);
         }
 
         // Check if message contains a notification payload.
         if (remoteMessage.getNotification() != null) {
             Log.d("MT", "Message Notification Body: " + remoteMessage.getNotification().getBody());
-            sendNotification(remoteMessage.getNotification().getBody(),remoteMessage.getNotification().getTitle());
+            //sendNotification(remoteMessage.getNotification().getBody(),remoteMessage.getNotification().getTitle());
         }
 
     }
@@ -49,9 +53,16 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 .setContentTitle(title)
                 .setContentText(body)
                 .setAutoCancel(true)
+                .setWhen(System.currentTimeMillis())
+                .setShowWhen(true)
+                .setDefaults(Notification.DEFAULT_LIGHTS)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setSound(notificationSound)
                 .setContentIntent(pendingIntent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            notifiBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText(body)
+                    .setBigContentTitle(title));
+        }
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(0/*ID of notification*/, notifiBuilder.build());

@@ -16,6 +16,7 @@ import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
@@ -61,6 +62,16 @@ public class UpdatePasswordActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_update_password);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar()!=null) getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
+
         // Set up the login form.
         mOriginPasswordView = (EditText) findViewById(R.id.origin_password);
         mPasswordView = (EditText) findViewById(R.id.password);
@@ -68,7 +79,7 @@ public class UpdatePasswordActivity extends AppCompatActivity {
         mOriginPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
-                if (id == R.id.login || id == EditorInfo.IME_NULL) {
+                if (id == EditorInfo.IME_NULL) {
                     updatePassword();
                     return true;
                 }
@@ -78,7 +89,7 @@ public class UpdatePasswordActivity extends AppCompatActivity {
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
-                if (id == R.id.login || id == EditorInfo.IME_NULL) {
+                if (id == EditorInfo.IME_NULL) {
                     updatePassword();
                     return true;
                 }
@@ -88,7 +99,7 @@ public class UpdatePasswordActivity extends AppCompatActivity {
         mConfirmPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
-                if (id == R.id.login || id == EditorInfo.IME_NULL) {
+                if (id == EditorInfo.IME_NULL) {
                     updatePassword();
                     return true;
                 }

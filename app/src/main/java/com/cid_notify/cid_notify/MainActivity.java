@@ -1,8 +1,12 @@
 package com.cid_notify.cid_notify;
 
+import android.app.Activity;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.customtabs.CustomTabsClient;
+import android.support.customtabs.CustomTabsIntent;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MenuItemCompat;
@@ -48,8 +52,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         setContentView(R.layout.activity_main);
         mList = (RecyclerView) findViewById(R.id.my_recycler_view);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh_layout);
         setSupportActionBar(toolbar);
+        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh_layout);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -106,8 +110,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     @Override public void onItemClick(View view, int position) {
                         // do whatever
                         Uri uri = Uri.parse("https://whoscall.com/zh-TW/tw/"+myDataSet.get(position).getPhoneNum());
-                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                        startActivity(intent);
+                        CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+                        CustomTabsIntent customTabsIntent = builder.build();
+                        builder.setStartAnimations(MainActivity.this, R.anim.slide_in_right, R.anim.slide_out_left);
+                        builder.setExitAnimations(MainActivity.this, R.anim.slide_in_left, R.anim.slide_out_right);
+                        customTabsIntent.launchUrl(MainActivity.this, uri);
                     }
 
                     @Override public void onLongItemClick(View view, int position) {
@@ -208,15 +215,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         int id = item.getItemId();
 
         if (id == R.id.nav_settings) {
-            Uri uri = Uri.parse("https://whoscall.com/zh-TW/tw/076011000");
-
-            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-            startActivity(intent);
-        } else if (id == R.id.nav_update_password) {
             startActivity(new Intent(MainActivity.this, UpdatePasswordActivity.class));
+        } else if (id == R.id.nav_admin) {
+            startActivity(new Intent(MainActivity.this, DevicesActivity.class));
             //finish();
         } else if (id == R.id.nav_logout) {
             mAuth.signOut();
+        } else if (id == R.id.nav_about_page) {
+            startActivity(new Intent(MainActivity.this, MyAboutPage.class));
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -228,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void onStart() {
         super.onStart();
         mAuth.addAuthStateListener(mAuthListener);
-
+        CustomTabsClient.connectAndInitialize(this, "com.android.chrome");
     }
 
     @Override

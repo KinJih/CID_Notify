@@ -39,12 +39,16 @@
             android:id="@+id/refresh_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-            <android.support.v7.widget.RecyclerView
+            <com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
                 android:id="@+id/my_recycler_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingBottom="5dp"
-                android:scrollbars="vertical"/>
+                app:fastScrollPopupTextSize="40sp"
+                app:fastScrollPopupBackgroundSize="70dp"
+                app:fastScrollPopupBgColor="@color/colorPrimary"
+                app:fastScrollPopupTextColor="@android:color/primary_text_dark"
+                app:fastScrollThumbColor="@color/colorPrimary"/>
         </android.support.v4.widget.SwipeRefreshLayout>
 
         <android.support.design.widget.NavigationView

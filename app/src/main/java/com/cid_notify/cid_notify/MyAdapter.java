@@ -1,6 +1,7 @@
 package com.cid_notify.cid_notify;
 
 import android.graphics.Color;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
@@ -14,9 +15,11 @@ import android.widget.Filterable;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
+
 import java.util.ArrayList;
 
-public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> implements Filterable{
+public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> implements FastScrollRecyclerView.SectionedAdapter,Filterable{
     private ArrayList<Record> mData;
     private ArrayList<Record> mFilterData;
     private String charString="";
@@ -27,6 +30,11 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> implem
     }
     public ArrayList<Record> getmFilterData(){
         return mFilterData;//let stickyDecoration can change with Filter
+    }
+    @NonNull
+    @Override
+    public String getSectionName(int position) {
+        return mFilterData.get(position).getDate();
     }
     @Override
     public Filter getFilter() {

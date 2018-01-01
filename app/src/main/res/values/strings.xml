@@ -10,7 +10,12 @@
     <string name="prompt_confirm_new_password">Confirm New Password</string>
     <string name="action_sign_up">Sign up</string>
     <string name="action_log_in">Log in</string>
-    <string name="action_update_password">Update Password</string>
+    <string name="title_activity_log_in">Log In</string>
+    <string name="title_activity_sign_up">Sign Up</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="title_activity_update_password">Update Password</string>
+    <string name="title_activity_devices">Devices</string>
+    <string name="title_activity_about">About Us</string>
     <string name="error_invalid_email">This email address is invalid</string>
     <string name="error_invalid_password">This password is too short</string>
     <string name="error_incorrect_password">This password is incorrect</string>
@@ -27,13 +32,9 @@
     <string name="auth_success">Login success</string>
     <string name="success">Success</string>
     <string name="failed">Failed</string>
-    <string name="title_activity_my_sign_up">Sign Up</string>
-    <string name="title_activity_login">Log In</string>
-    <string name="title_activity_sign_up">Sign Up</string>
-    <string name="title_activity_main">MainActivity</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-
+    <string name="copy_right" translatable="false">Copyrights © %1$d</string>
     <string name="action_settings">Settings</string>
 </resources>
