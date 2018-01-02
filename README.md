@@ -1,6 +1,6 @@
 # CID_Notify 
 * 組別 : 第17組
-### 成員 
+### 組員 
 >* 0424035 鄧仁豐
 >* 0424014 張証寓
 >* 0424058 邱彥鈞
@@ -13,7 +13,7 @@
 > 功能性需求
 >1. 來電辨識
 <br>1.1 收到訊號並即時解碼
-<br>1.2 透過 Whoscall 或 TrueCaller 查詢號碼所屬之資訊
+<br>1.2 透過 Whoscall 查詢號碼所屬之資訊
 >2. 即時通知
 <br>2.1 將查詢之資訊顯示在Pi的螢幕上
 <br>2.2 透過 FireBase Server 進行手機APP通知發送
@@ -23,7 +23,7 @@
 
 > 非功能性需求
 >1. 效能需求
-<br>1.1 效能必須達到一定水準，e.g.響鈴3秒內顯示
+<br>1.1 效能必須達到一定水準，e.g.響鈴2秒內顯示
 <br>1.2 低功耗、低發熱量
 >2. 安全需求
 <br> 2.1 使用者認證，避免隱私外洩
@@ -31,8 +31,8 @@
 >3. 操作需求 UI/UX
 <br>3.1 提高使用者體驗，操作容易上手
 <br>3.2 介面乾淨美觀，資訊清晰
-
-![Click me](CID.png)  
-
-<img src="Screenshot_20170919-154535.png" height="800" width="450">
-<img src="Screenshot_20170919-154453.png" height="800" width="450">
+-------
+### 更多資訊
+* 專題簡報(期中) : https://drive.google.com/open?id=1m_dXNWWTjjTDj8aN3ilL4lHQYWQmfSsZ
+* APP簡報(期末) : https://drive.google.com/open?id=1C8t2hfUMjrtTTqMzya_BowDsOwFzATao
+* 展示影片 : https://drive.google.com/open?id=1caBB1txIRBJcF-aCH_5RrLvOTPRYl4Dy
