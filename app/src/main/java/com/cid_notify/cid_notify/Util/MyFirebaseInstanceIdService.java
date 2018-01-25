@@ -1,4 +1,4 @@
-package com.cid_notify.cid_notify;
+package com.cid_notify.cid_notify.Util;
 
 import android.os.Build;
 import android.provider.Settings;

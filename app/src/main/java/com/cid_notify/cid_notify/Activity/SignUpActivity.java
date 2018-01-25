@@ -1,20 +1,19 @@
-package com.cid_notify.cid_notify;
+package com.cid_notify.cid_notify.Activity;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.content.Intent;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.app.LoaderManager.LoaderCallbacks;
-
 import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
-
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -29,18 +28,19 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import com.cid_notify.cid_notify.Model.AdminData;
+import com.cid_notify.cid_notify.R;
 import com.google.firebase.auth.FirebaseAuth;
-
 import android.widget.Toast;
-
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -59,6 +59,9 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
     private EditText mConfirmPasswordView;
+    private EditText mSecondPassword;
+    private EditText mCellView;
+    private EditText mBirthView;
     private View mProgressView;
     private View mLoginFormView;
     private FirebaseAuth mAuth;
@@ -69,7 +72,7 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
         setContentView(R.layout.activity_sign_up);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        if (getSupportActionBar()!=null) getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        if (getSupportActionBar() != null) getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -83,20 +86,14 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
         Button btnLogIn = (Button) findViewById(R.id.log_in_button);
         mPasswordView = (EditText) findViewById(R.id.password);
         mConfirmPasswordView = (EditText) findViewById(R.id.confirm_password);
-        mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        mSecondPassword = (EditText) findViewById(R.id.second_password);
+        mCellView = (EditText) findViewById(R.id.cellphone_number);
+        mBirthView = (EditText) findViewById(R.id.birthday);
+        showAlert();
+        mBirthView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
-                if (id == EditorInfo.IME_NULL) {
-                    attemptLogin();
-                    return true;
-                }
-                return false;
-            }
-        });
-        mConfirmPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
-                if (id == 1024 || id == EditorInfo.IME_NULL) {
+                if (id == EditorInfo.IME_ACTION_DONE|| id == EditorInfo.IME_NULL) {
                     attemptLogin();
                     return true;
                 }
@@ -118,7 +115,6 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
         btnLogIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(SignUpActivity.this, LoginActivity.class));
                 finish();
             }
         });
@@ -167,6 +163,15 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
         }
     }
 
+    public void showAlert(){
+        new AlertDialog.Builder(SignUpActivity.this)
+                .setTitle("*IMPORTANT*")
+                .setMessage("You must use a second password when you need to change your password and cancel notification feature of an appliance. \n\nIf you accidentally forget the second password, you cna reset it through your cellphone number and birthday.")
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }}).show();
+    }
 
     /**
      * Attempts to sign in or register the account specified by the login form.
@@ -178,11 +183,17 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
         mEmailView.setError(null);
         mPasswordView.setError(null);
         mConfirmPasswordView.setError(null);
+        mSecondPassword.setError(null);
+        mCellView.setError(null);
+        mBirthView.setError(null);
 
         // Store values at the time of the login attempt.
         String email = mEmailView.getText().toString();
         String password = mPasswordView.getText().toString();
-        String confirmpassword = mConfirmPasswordView.getText().toString();
+        String confirmPassword = mConfirmPasswordView.getText().toString();
+        final String secondPassword = mSecondPassword.getText().toString();
+        final String cellphone = mCellView.getText().toString();
+        final String birthday =mBirthView.getText().toString();
         boolean cancel = false;
         View focusView = null;
 
@@ -192,7 +203,7 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
             focusView = mPasswordView;
             cancel = true;
         }
-        if (TextUtils.isEmpty(confirmpassword) || !confirmpassword.equals(password)) {
+        if (TextUtils.isEmpty(confirmPassword) || !confirmPassword.equals(password)) {
             mConfirmPasswordView.setError(getString(R.string.error_incorrect_password));
             focusView = mConfirmPasswordView;
             cancel = true;
@@ -209,6 +220,21 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
             cancel = true;
         }
 
+        if (TextUtils.isEmpty(secondPassword) || !isPasswordValid(secondPassword)) {
+            mSecondPassword.setError(getString(R.string.error_invalid_password));
+            focusView = mSecondPassword;
+            cancel = true;
+        }
+        if (TextUtils.isEmpty(cellphone) || cellphone.length()!=10) {
+            mCellView.setError(getString(R.string.error_field_required));
+            focusView = mCellView;
+            cancel = true;
+        }
+        if (TextUtils.isEmpty(birthday) || birthday.length()!=8) {
+            mBirthView.setError(getString(R.string.error_field_required));
+            focusView = mBirthView;
+            cancel = true;
+        }
         if (cancel) {
             // There was an error; don't attempt login and focus the first
             // form field with an error.
@@ -217,30 +243,34 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            if (!password.equals(confirmpassword)) return;
+            if (!password.equals(confirmPassword)) return;
             mAuth = FirebaseAuth.getInstance();
-            mAuth.createUserWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            if (!task.isSuccessful()) {
-                                Toast.makeText(SignUpActivity.this, R.string.auth_failed,
-                                        Toast.LENGTH_SHORT).show();
-                            } else {
-                                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                                if (user != null) {
-                                    user.sendEmailVerification();
-                                    mAuth.signOut();
-                                    Toast.makeText(SignUpActivity.this, "Verified mail has been send",
-                                            Toast.LENGTH_SHORT).show();
-                                    startActivity(new Intent(SignUpActivity.this, LoginActivity.class));
-                                    finish();
-                                }
-                            }
+            mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                @Override
+                public void onComplete(@NonNull Task<AuthResult> task) {
+                    if (!task.isSuccessful()) {
+                        Toast.makeText(SignUpActivity.this, R.string.failed, Toast.LENGTH_SHORT).show();
+                        showProgress(false);
+                    } else {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            user.sendEmailVerification();
+                            mAuth.signOut();
+                            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(user.getUid());
+                            databaseReference.child("E-Mail").setValue(user.getEmail());
+                            databaseReference.child("Admin").setValue(new AdminData(secondPassword,cellphone,birthday));
+                            Toast.makeText(SignUpActivity.this, getString(R.string.send_verification_mail), Toast.LENGTH_LONG).show();
+                            finish();
+                        } else {
+                            Toast.makeText(SignUpActivity.this, getString(R.string.can_not_send_verification_mail), Toast.LENGTH_LONG).show();
                         }
-                    });
+                        showProgress(false);
+                    }
+                }
+            });
         }
     }
+
 
     private boolean isEmailValid(String email) {
         //TODO: Replace this with your own logic
@@ -260,32 +290,32 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
         // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
         // for very easy animations. If available, use these APIs to fade-in
         // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+        int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
-            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-            mLoginFormView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-                }
-            });
+        mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+        mLoginFormView.animate().setDuration(shortAnimTime).alpha(
+                show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+            }
+        });
 
-            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-            mProgressView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-                }
-            });
-        } else {
+        mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+        mProgressView.animate().setDuration(shortAnimTime).alpha(
+                show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+            }
+        });
+       /* } else {
             // The ViewPropertyAnimator APIs are not available, so simply show
             // and hide the relevant UI components.
             mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
             mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-        }
+        }*/
     }
 
     @Override

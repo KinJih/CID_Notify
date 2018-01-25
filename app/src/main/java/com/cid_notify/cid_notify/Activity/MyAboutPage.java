@@ -1,4 +1,4 @@
-package com.cid_notify.cid_notify;
+package com.cid_notify.cid_notify.Activity;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -7,6 +7,9 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+
+import com.cid_notify.cid_notify.R;
+
 import java.util.Calendar;
 import mehdi.sakout.aboutpage.AboutPage;
 import mehdi.sakout.aboutpage.Element;

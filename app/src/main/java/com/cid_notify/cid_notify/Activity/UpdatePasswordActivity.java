@@ -1,20 +1,11 @@
-package com.cid_notify.cid_notify;
+package com.cid_notify.cid_notify.Activity;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.app.LoaderManager.LoaderCallbacks;
-import android.content.CursorLoader;
-import android.content.Intent;
-import android.content.Loader;
-import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -22,25 +13,18 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.cid_notify.cid_notify.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static android.Manifest.permission.READ_CONTACTS;
 
 /**
  * A login screen that offers login via email/password.
@@ -80,7 +64,7 @@ public class UpdatePasswordActivity extends AppCompatActivity {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
                 if (id == EditorInfo.IME_NULL) {
-                    updatePassword();
+                    attemptUpdate();
                     return true;
                 }
                 return false;
@@ -90,7 +74,7 @@ public class UpdatePasswordActivity extends AppCompatActivity {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
                 if (id == EditorInfo.IME_NULL) {
-                    updatePassword();
+                    attemptUpdate();
                     return true;
                 }
                 return false;
@@ -100,7 +84,7 @@ public class UpdatePasswordActivity extends AppCompatActivity {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
                 if (id == EditorInfo.IME_NULL) {
-                    updatePassword();
+                    attemptUpdate();
                     return true;
                 }
                 return false;
@@ -111,7 +95,7 @@ public class UpdatePasswordActivity extends AppCompatActivity {
         mUpdatePasswordButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                updatePassword();
+                attemptUpdate();
             }
         });
 
@@ -124,21 +108,21 @@ public class UpdatePasswordActivity extends AppCompatActivity {
      * If there are form errors (invalid email, missing fields, etc.), the
      * errors are presented and no actual login attempt is made.
      */
-    private void updatePassword() {
+    private void attemptUpdate() {
         // Reset errors.
         mOriginPasswordView.setError(null);
         mPasswordView.setError(null);
         mConfirmPasswordView.setError(null);
 
         // Store values at the time of the login attempt.
-        String originpassword = mOriginPasswordView.getText().toString();
+        String originPassword = mOriginPasswordView.getText().toString();
         final String password = mPasswordView.getText().toString();
-        String confirmpassword = mConfirmPasswordView.getText().toString();
+        String confirmPassword = mConfirmPasswordView.getText().toString();
         boolean cancel = false;
         View focusView = null;
 
         // Check for a valid password, if the user entered one.
-        if (TextUtils.isEmpty(originpassword) || !isPasswordValid(originpassword)) {
+        if (TextUtils.isEmpty(originPassword) || !isPasswordValid(originPassword)) {
             mPasswordView.setError(getString(R.string.error_invalid_password));
             focusView = mOriginPasswordView;
             cancel = true;
@@ -148,7 +132,7 @@ public class UpdatePasswordActivity extends AppCompatActivity {
             focusView = mPasswordView;
             cancel = true;
         }
-        if (TextUtils.isEmpty(confirmpassword) || !confirmpassword.equals(password)) {
+        if (TextUtils.isEmpty(confirmPassword) || !confirmPassword.equals(password)) {
             mConfirmPasswordView.setError(getString(R.string.error_incorrect_password));
             focusView = mConfirmPasswordView;
             cancel = true;
@@ -162,34 +146,38 @@ public class UpdatePasswordActivity extends AppCompatActivity {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            if (!password.equals(confirmpassword)) return;
+            //if (!password.equals(confirmPassword)) return;
             final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-            AuthCredential credential = EmailAuthProvider.getCredential(user.getEmail(), originpassword);
+            AuthCredential credential = EmailAuthProvider.getCredential(user.getEmail(), originPassword);
             user.reauthenticate(credential).addOnCompleteListener(new OnCompleteListener<Void>() {
                 @Override
                 public void onComplete(@NonNull Task<Void> task) {
                     if (task.isSuccessful()) {
-                        user.updatePassword(password).addOnCompleteListener(new OnCompleteListener<Void>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Void> task) {
-                                if (!task.isSuccessful()) {
-                                    Toast.makeText(UpdatePasswordActivity.this, R.string.failed,
-                                            Toast.LENGTH_SHORT).show();
-                                } else {
-                                    Toast.makeText(UpdatePasswordActivity.this, R.string.success,
-                                            Toast.LENGTH_SHORT).show();
-                                    startActivity(new Intent(UpdatePasswordActivity.this, MainActivity.class));
-                                    finish();
-                                }
-                            }
-                        });
+                        updatePwd(user,password);
+                    }else{
+                        Toast.makeText(UpdatePasswordActivity.this, R.string.error_incorrect_password, Toast.LENGTH_SHORT).show();
+                        showProgress(false);
                     }
                 }
             });
         }
     }
 
-
+    private void updatePwd(FirebaseUser user , String password){
+        user.updatePassword(password).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (task.isSuccessful()) {
+                    Toast.makeText(UpdatePasswordActivity.this, R.string.success, Toast.LENGTH_SHORT).show();
+                    FirebaseAuth.getInstance().signOut();
+                    finish();
+                }else{
+                    Toast.makeText(UpdatePasswordActivity.this, R.string.failed, Toast.LENGTH_SHORT).show();
+                    showProgress(false);
+                }
+            }
+        });
+    }
     private boolean isPasswordValid(String password) {
         //TODO: Replace this with your own logic
         return password.length() > 4;
@@ -203,7 +191,7 @@ public class UpdatePasswordActivity extends AppCompatActivity {
         // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
         // for very easy animations. If available, use these APIs to fade-in
         // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
             int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
             mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
@@ -223,11 +211,11 @@ public class UpdatePasswordActivity extends AppCompatActivity {
                     mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
                 }
             });
-        } else {
+        /*} else {
             // The ViewPropertyAnimator APIs are not available, so simply show
             // and hide the relevant UI components.
             mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
             mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-        }
+        }*/
     }
 }

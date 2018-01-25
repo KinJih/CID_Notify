@@ -1,4 +1,4 @@
-package com.cid_notify.cid_notify;
+package com.cid_notify.cid_notify.Util;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;

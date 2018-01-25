@@ -1,4 +1,4 @@
-package com.cid_notify.cid_notify;
+package com.cid_notify.cid_notify.Activity;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -8,6 +8,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.cid_notify.cid_notify.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -15,8 +16,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
-import java.util.Collections;
 
 public class DevicesActivity extends AppCompatActivity {
 
@@ -44,11 +43,11 @@ public class DevicesActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
 
-        DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference(user.getUid());
+        final DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference(user.getUid());
         reference_contacts.child("Devices").orderByChild("Last_Login").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                Toast.makeText(com.cid_notify.cid_notify.DevicesActivity.this, R.string.failed, Toast.LENGTH_SHORT).show();
+                Toast.makeText(DevicesActivity.this, R.string.failed, Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -58,6 +57,7 @@ public class DevicesActivity extends AppCompatActivity {
                     String de = "Model: "+ds.child("Model").getValue()+"\nLast login: "+ds.child("Last_Login").getValue();
                     adapter.insert(de,0);
                 }
+                reference_contacts.removeEventListener(this);
                 // Toast.makeText(MainActivity.this, R.string.success, Toast.LENGTH_SHORT).show();
             }
         });

@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.cid_notify.cid_notify.DevicesActivity">
+    tools:context="com.cid_notify.cid_notify.Activity.DevicesActivity">
 
         <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar"

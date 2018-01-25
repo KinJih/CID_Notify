@@ -1,4 +1,4 @@
-package com.cid_notify.cid_notify;
+package com.cid_notify.cid_notify.Util;
 
 
 
@@ -12,6 +12,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+
+import com.cid_notify.cid_notify.Activity.MainActivity;
+import com.cid_notify.cid_notify.R;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
@@ -26,8 +29,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
             Log.d("MT", "Message data payload: " + remoteMessage.getData());
-            String body = "From : "+remoteMessage.getData().get("phoneNum")+"\nTo : "+remoteMessage.getData().get("CallTo");
-            String title = "New calls : "+remoteMessage.getData().get("number_info");
+            String body = getString(R.string.from)+" : "+remoteMessage.getData().get("phoneNum")+"\n"+getString(R.string.to)+" : "+remoteMessage.getData().get("CallTo");
+            String title = getString(R.string.new_calls)+" : "+remoteMessage.getData().get("number_info");
             sendNotification(body,title);
         }
 

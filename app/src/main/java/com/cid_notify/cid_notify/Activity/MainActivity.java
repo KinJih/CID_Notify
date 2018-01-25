@@ -1,7 +1,9 @@
-package com.cid_notify.cid_notify;
+package com.cid_notify.cid_notify.Activity;
 
-import android.app.Activity;
-import android.graphics.Color;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -13,23 +15,36 @@ import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.content.Intent;
+
+import com.cid_notify.cid_notify.Model.AdminData;
+import com.cid_notify.cid_notify.Model.Record;
+import com.cid_notify.cid_notify.R;
+import com.cid_notify.cid_notify.Util.DensityUtil;
+import com.cid_notify.cid_notify.Util.EncryptUtil;
+import com.cid_notify.cid_notify.Util.MyAdapter;
+import com.cid_notify.cid_notify.Util.RecyclerItemClickListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Calendar;
 import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 import com.gavin.com.library.listener.GroupListener;
 import com.gavin.com.library.StickyDecoration;
@@ -41,7 +56,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private FirebaseUser user;
-    private RecyclerView mList;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private ArrayList<Record> myDataSet = new ArrayList<>();
     private MyAdapter myAdapter;
@@ -49,8 +63,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        mList = (RecyclerView) findViewById(R.id.my_recycler_view);
+        setContentView(com.cid_notify.cid_notify.R.layout.activity_main);
+        RecyclerView  mList = (RecyclerView) findViewById(R.id.my_recycler_view);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh_layout);
@@ -68,6 +82,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         mList.setNestedScrollingEnabled(true);
         mList.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         myAdapter = new MyAdapter(myDataSet);
+        mList.setAdapter(myAdapter);
+
         mAuth = FirebaseAuth.getInstance();
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
@@ -83,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         };
 
         final Calendar c = Calendar.getInstance();
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINESE);
         final String formatToday = df.format(c.getTime());
         c.add(Calendar.DATE, -1);
         final String formatYesterday = df.format(c.getTime());
@@ -94,7 +110,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     public String getGroupName(int position) {
                         if (myAdapter.getmFilterData().size() > position) {
                             String recordDate = myAdapter.getmFilterData().get(position).getDate();
-                            return recordDate.equals(formatToday) ? "Today" : recordDate.equals(formatYesterday) ? "Yesterday" : recordDate;
+                            return recordDate.equals(formatToday) ? getString(R.string.today) : recordDate.equals(formatYesterday) ? getString(R.string.yesterday) : recordDate;
                         }
                         return null;
                     }
@@ -105,20 +121,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 .setGroupTextSize(DensityUtil.sp2px(this, 20))
                 .build();
         mList.addItemDecoration(decoration);
-        mList.addOnItemTouchListener(
-                new RecyclerItemClickListener(MainActivity.this, mList ,new RecyclerItemClickListener.OnItemClickListener() {
+        mList.addOnItemTouchListener(new RecyclerItemClickListener(MainActivity.this, mList ,new RecyclerItemClickListener.OnItemClickListener() {
                     @Override public void onItemClick(View view, int position) {
                         // do whatever
                         Uri uri = Uri.parse("https://whoscall.com/zh-TW/tw/"+myDataSet.get(position).getPhoneNum());
                         CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
                         CustomTabsIntent customTabsIntent = builder.build();
-                        builder.setStartAnimations(MainActivity.this, R.anim.slide_in_right, R.anim.slide_out_left);
-                        builder.setExitAnimations(MainActivity.this, R.anim.slide_in_left, R.anim.slide_out_right);
                         customTabsIntent.launchUrl(MainActivity.this, uri);
                     }
 
                     @Override public void onLongItemClick(View view, int position) {
                         // do whatever
+                        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                        ClipData clip = ClipData.newPlainText("PhoneNumber",myDataSet.get(position).getPhoneNum());
+                        clipboard.setPrimaryClip(clip);
+                        Toast.makeText(MainActivity.this, R.string.action_copy_to_clipboard, Toast.LENGTH_SHORT).show();
                     }
                 })
         );
@@ -139,8 +156,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void getData() {
         Log.d("RDB", "ReadDB");
         mSwipeRefreshLayout.setRefreshing(true);
-        //Toast.makeText(MainActivity.this, "loading...", Toast.LENGTH_SHORT).show();
-        DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference(user.getUid());
+        final DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference(user.getUid());
         reference_contacts.child("Records").orderByChild("date").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onCancelled(DatabaseError databaseError) {
@@ -155,9 +171,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     myDataSet.add(record);
                 }
                 Collections.reverse(myDataSet);
-                mList.setAdapter(myAdapter);
+                myAdapter.notifyDataSetChanged();
+                reference_contacts.removeEventListener(this);
                 mSwipeRefreshLayout.setRefreshing(false);
-                // Toast.makeText(MainActivity.this, R.string.success, Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -215,10 +231,54 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         int id = item.getItemId();
 
         if (id == R.id.nav_settings) {
-            startActivity(new Intent(MainActivity.this, UpdatePasswordActivity.class));
-        } else if (id == R.id.nav_admin) {
             startActivity(new Intent(MainActivity.this, DevicesActivity.class));
-            //finish();
+        } else if (id == R.id.nav_admin) {
+            final View editDialog = LayoutInflater.from(MainActivity.this).inflate(R.layout.second_password_dailog, null);
+            new AlertDialog.Builder(MainActivity.this)
+                    .setView(editDialog)
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            EditText editText = (EditText) editDialog.findViewById(R.id.second_password_text);
+                            final String secPwd = editText.getText().toString();
+                            if(TextUtils.isEmpty(secPwd)){
+                                Toast.makeText(getApplicationContext(), R.string.error_field_required, Toast.LENGTH_SHORT).show();
+                            } else {
+                                final DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference(user.getUid());
+                                reference_contacts.child("Admin").addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(DataSnapshot dataSnapshot) {
+                                        AdminData adminData = dataSnapshot.getValue(AdminData.class);
+                                        String pwdSha=EncryptUtil.pwd2sha(secPwd,adminData.getcellphone(),adminData.getbirthday());
+                                        if (pwdSha.equals(adminData.getsecondPassword())){
+                                            startActivity(new Intent(MainActivity.this, UpdatePasswordActivity.class));
+                                        }else{
+                                            Toast.makeText(MainActivity.this, R.string.error_incorrect_password, Toast.LENGTH_SHORT).show();
+                                        }
+                                        reference_contacts.removeEventListener(this);
+                                    }
+
+                                    @Override
+                                    public void onCancelled(DatabaseError databaseError) {
+                                        Toast.makeText(MainActivity.this, R.string.failed, Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            }
+                        }
+                    })
+                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+
+                        }
+                    })
+                    .setNeutralButton("Forget", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startActivity(new Intent(MainActivity.this, ResetSecondPasswordActivity.class));
+                        }
+                    })
+                    .show();
         } else if (id == R.id.nav_logout) {
             mAuth.signOut();
         } else if (id == R.id.nav_about_page) {

@@ -1,4 +1,4 @@
-package com.cid_notify.cid_notify;
+package com.cid_notify.cid_notify.Activity;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -18,7 +18,6 @@ import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -33,9 +32,15 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
+
 import android.content.Intent;
+
+import com.cid_notify.cid_notify.R;
 import com.google.firebase.auth.FirebaseAuth;
+
 import android.widget.Toast;
+
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -55,13 +60,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * Id to identity READ_CONTACTS permission request.
      */
     private static final int REQUEST_READ_CONTACTS = 0;
-    private FirebaseAuth auth;
-
-    /**
-     * Keep track of the login task to ensure we can cancel it if requested.
-     */
-
-
+    private FirebaseAuth mAuth;
     // UI references.
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
@@ -85,7 +84,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
-                if (id == 1024 || id == EditorInfo.IME_NULL) {
+                if (id == EditorInfo.IME_ACTION_DONE|| id == EditorInfo.IME_NULL) {
                     attemptLogin();
                     return true;
                 }
@@ -108,7 +107,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(LoginActivity.this, SignUpActivity.class));
-                finish();
             }
         });
 
@@ -171,8 +169,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             mEmailView.requestFocus();
             return;
         }
-        auth = FirebaseAuth.getInstance();
-        auth.sendPasswordResetEmail(Email)
+        mAuth = FirebaseAuth.getInstance();
+        mAuth.sendPasswordResetEmail(Email)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
@@ -230,52 +228,45 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            //mAuthTask = new UserLoginTask(email, password);
-            // mAuthTask.execute((Void) null);
-            auth = FirebaseAuth.getInstance();
-            auth.signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            if (task.isSuccessful()) {
-                                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                                if (user != null) {
-                                    if (user.isEmailVerified()) {
-                                        Toast.makeText(LoginActivity.this, R.string.auth_success, Toast.LENGTH_SHORT).show();
-
-                                        writeDataBase(user);
-                                        startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                                        finish();
-                                    } else {
-                                        Toast.makeText(LoginActivity.this, "Email hasn't been verified",
-                                                Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-                                showProgress(false);
-                            } else {
-                                Toast.makeText(LoginActivity.this, R.string.auth_failed,
-                                        Toast.LENGTH_SHORT).show();
-                                showProgress(false);
-                            }
+            mAuth = FirebaseAuth.getInstance();
+            mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
+                @Override
+                public void onComplete(@NonNull Task<AuthResult> task) {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            doVerify(user);
+                        }else{
+                            Toast.makeText(LoginActivity.this, R.string.auth_failed+'!', Toast.LENGTH_SHORT).show();
                         }
-                    });
-
+                        showProgress(false);
+                    } else {
+                        Toast.makeText(LoginActivity.this, R.string.auth_failed, Toast.LENGTH_SHORT).show();
+                        showProgress(false);
+                    }
+                }
+            });
         }
     }
-    private void writeDataBase(FirebaseUser user){
-        Calendar c = Calendar.getInstance();
-        String SID;
-        if(Build.SERIAL.equals("unknown")){
-            SID = "Oreo_"+Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-        }else{
-            SID = Build.SERIAL;
+
+    private void doVerify(FirebaseUser user) {
+        if (user.isEmailVerified()) {
+            Toast.makeText(LoginActivity.this, R.string.auth_success, Toast.LENGTH_SHORT).show();
+
+            Calendar c = Calendar.getInstance();
+            String SID = Build.SERIAL.equals("unknown") ? "Oreo_" + Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID) : Build.SERIAL;
+
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINESE);
+            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(user.getUid());
+            databaseReference.child("Devices").child(SID).child("Token").setValue(FirebaseInstanceId.getInstance().getToken());
+            databaseReference.child("Devices").child(SID).child("Model").setValue(Build.MODEL);
+            databaseReference.child("Devices").child(SID).child("Last_Login").setValue(df.format(c.getTime()));
+
+            startActivity(new Intent(LoginActivity.this, MainActivity.class));
+            finish();
+        } else {
+            Toast.makeText(LoginActivity.this, getString(R.string.email_not_verified), Toast.LENGTH_LONG).show();
         }
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(user.getUid());
-        databaseReference.child("E-Mail").setValue(user.getEmail());
-        databaseReference.child("Devices").child(SID).child("Token").setValue(FirebaseInstanceId.getInstance().getToken());
-        databaseReference.child("Devices").child(SID).child("Model").setValue(Build.MODEL);
-        databaseReference.child("Devices").child(SID).child("Last_Login").setValue(df.format(c.getTime()));
     }
 
     private boolean isEmailValid(String email) {
@@ -296,32 +287,32 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
         // for very easy animations. If available, use these APIs to fade-in
         // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+        // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+        int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
-            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-            mLoginFormView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-                }
-            });
+        mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+        mLoginFormView.animate().setDuration(shortAnimTime).alpha(
+                show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+            }
+        });
 
-            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-            mProgressView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-                }
-            });
-        } else {
+        mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+        mProgressView.animate().setDuration(shortAnimTime).alpha(
+                show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+            }
+        });
+       /* } else {
             // The ViewPropertyAnimator APIs are not available, so simply show
             // and hide the relevant UI components.
             mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
             mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-        }
+        }*/
     }
 
     @Override

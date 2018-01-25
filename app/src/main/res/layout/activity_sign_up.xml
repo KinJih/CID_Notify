@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:gravity="center_horizontal"
     android:orientation="vertical"
-    tools:context="com.cid_notify.cid_notify.SignUpActivity">
+    tools:context="com.cid_notify.cid_notify.Activity.SignUpActivity">
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar"
@@ -45,6 +45,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/prompt_email"
+                    android:imeOptions="actionNext"
                     android:inputType="textEmailAddress"
                     android:maxLines="1"
                     android:singleLine="true" />
@@ -59,11 +60,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/prompt_password"
-                    android:imeOptions="actionUnspecified"
+                    android:imeOptions="actionNext"
                     android:inputType="textPassword"
                     android:maxLines="1"
                     android:singleLine="true" />
-                </android.support.design.widget.TextInputLayout>
+            </android.support.design.widget.TextInputLayout>
+
             <android.support.design.widget.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -72,13 +74,57 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/prompt_confirm_password"
-                    android:imeActionId="1024"
-                    android:imeActionLabel="@string/action_sign_up"
-                    android:imeOptions="actionUnspecified"
+                    android:imeOptions="actionNext"
                     android:inputType="textPassword"
                     android:maxLines="1"
                     android:singleLine="true" />
 
+            </android.support.design.widget.TextInputLayout>
+
+            <android.support.design.widget.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <EditText
+                    android:id="@+id/second_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Second password"
+                    android:imeOptions="actionNext"
+                    android:inputType="textPassword"
+                    android:maxLines="1"
+                    android:singleLine="true" />
+            </android.support.design.widget.TextInputLayout>
+
+            <android.support.design.widget.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <EditText
+                    android:id="@+id/cellphone_number"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Cellphone number"
+                    android:imeOptions="actionNext"
+                    android:inputType="phone"
+                    android:maxLines="1"
+                    android:singleLine="true" />
+            </android.support.design.widget.TextInputLayout>
+
+            <android.support.design.widget.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <EditText
+                    android:id="@+id/birthday"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Birthday e.g. 19700101"
+                    android:imeOptions="actionDone"
+                    android:inputType="number"
+                    android:imeActionLabel="@string/title_activity_sign_up"
+                    android:maxLines="1"
+                    android:singleLine="true" />
             </android.support.design.widget.TextInputLayout>
 
             <Button
@@ -87,7 +133,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="@string/action_sign_up"
+                android:text="@string/title_activity_sign_up"
                 android:textStyle="bold" />
 
             <Button
@@ -99,7 +145,7 @@
                 android:text="@string/btn_link_to_login"
                 android:textAllCaps="false"
                 android:textColor="@color/gray"
-                android:textSize="15dp" />
+                android:textSize="15sp" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>
