@@ -254,13 +254,13 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             Toast.makeText(LoginActivity.this, R.string.auth_success, Toast.LENGTH_SHORT).show();
 
             Calendar c = Calendar.getInstance();
-            String SID = Build.SERIAL.equals("unknown") ? "Oreo_" + Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID) : Build.SERIAL;
+            String SID = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
 
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINESE);
             DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(user.getUid());
             databaseReference.child("Devices").child(SID).child("Token").setValue(FirebaseInstanceId.getInstance().getToken());
             databaseReference.child("Devices").child(SID).child("Model").setValue(Build.MODEL);
-            databaseReference.child("Devices").child(SID).child("Last_Login").setValue(df.format(c.getTime()));
+            databaseReference.child("Devices").child(SID).child("Login_Time").setValue(df.format(c.getTime()));
 
             startActivity(new Intent(LoginActivity.this, MainActivity.class));
             finish();

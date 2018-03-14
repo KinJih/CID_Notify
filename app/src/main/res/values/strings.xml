@@ -38,9 +38,8 @@
     <string name="action_copy_to_clipboard">Copy to clipboard</string>
     <string name="today">Today</string>
     <string name="yesterday">Yesterday</string>
-    <string name="new_calls">New calls</string>
-    <string name="from">From</string>
-    <string name="to">To</string>
+    <string name="new_call">New call</string>
+    <string name="arrow">→</string>
     <string name="title_activity_reset_second_password">Reset second password</string>
     <string name="action_sign_in">Sign in or register</string>
     <string name="action_sign_in_short">Sign in</string>

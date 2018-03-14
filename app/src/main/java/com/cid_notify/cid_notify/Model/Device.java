@@ -8,10 +8,9 @@ public class Device {
 
     private String SID;
     private String Model;
-    private String Last_Login;
+    private String Login_Time;
     private String Token;
     public Device(){
-
         Calendar c = Calendar.getInstance();
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINESE);
     }

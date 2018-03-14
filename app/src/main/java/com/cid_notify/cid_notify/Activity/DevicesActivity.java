@@ -54,7 +54,7 @@ public class DevicesActivity extends AppCompatActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 adapter.clear();
                 for (DataSnapshot ds : dataSnapshot.getChildren()) {
-                    String de = "Model: "+ds.child("Model").getValue()+"\nLast login: "+ds.child("Last_Login").getValue();
+                    String de = "Model: "+ds.child("Model").getValue()+"\nLogin time: "+ds.child("Login_Time").getValue();
                     adapter.insert(de,0);
                 }
                 reference_contacts.removeEventListener(this);

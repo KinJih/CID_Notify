@@ -1,8 +1,8 @@
 package com.cid_notify.cid_notify.Util;
 
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
-import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
 import android.text.style.ForegroundColorSpan;
@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Filter;
 import android.widget.Filterable;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.cid_notify.cid_notify.Model.Record;
@@ -81,9 +82,9 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> implem
         holder.setValues(record);
 
         if (record.getNumber_info().contains("市場")||record.getNumber_info().contains("推銷")){
-            ((CardView)holder.itemView).setCardBackgroundColor(Color.YELLOW);
+           holder.mImageView.setImageResource(R.drawable.ic_cid_service_red);
         }else{
-            ((CardView)holder.itemView).setCardBackgroundColor(Color.WHITE);
+            holder.mImageView.setImageResource(R.drawable.ic_cid_service_green);
         }
 
         String num = record.getPhoneNum().toLowerCase();
@@ -113,12 +114,14 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> implem
         private TextView mTextTime;
         private TextView mTextNumber;
         private TextView mTextPerson;
+        private ImageView mImageView;
 
         public ViewHolder(View v) {
             super(v);
             mTextTime = (TextView) v.findViewById(R.id.text_time);
             mTextNumber = (TextView) v.findViewById(R.id.text_phone_number);
             mTextPerson = (TextView) v.findViewById(R.id.text_person);
+            mImageView = (ImageView) v.findViewById(R.id.cid_image);
         }
 
         public void setValues(Record record) {

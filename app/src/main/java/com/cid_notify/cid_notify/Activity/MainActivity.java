@@ -6,7 +6,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.customtabs.CustomTabsClient;
 import android.support.customtabs.CustomTabsIntent;
 import android.support.design.widget.NavigationView;
@@ -33,6 +35,7 @@ import com.cid_notify.cid_notify.R;
 import com.cid_notify.cid_notify.Util.DensityUtil;
 import com.cid_notify.cid_notify.Util.EncryptUtil;
 import com.cid_notify.cid_notify.Util.MyAdapter;
+import com.cid_notify.cid_notify.Util.MyFirebaseInstanceIdService;
 import com.cid_notify.cid_notify.Util.RecyclerItemClickListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -50,7 +53,6 @@ import com.gavin.com.library.listener.GroupListener;
 import com.gavin.com.library.StickyDecoration;
 import android.support.v7.widget.RecyclerView;
 import android.widget.Toast;
-
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     private FirebaseAuth mAuth;
@@ -94,6 +96,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     finish();
                 } else {
                     getData();
+                    final DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference(user.getUid());
+                    reference_contacts.child("Telephone").addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                            Toast.makeText(MainActivity.this, R.string.failed, Toast.LENGTH_SHORT).show();
+                        }
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            TextView teleTextView = (TextView) findViewById(R.id.telephoneText);
+                            teleTextView.setText(String.valueOf(dataSnapshot.getValue()));
+                            reference_contacts.removeEventListener(this);
+                        }
+                    });
                 }
             }
         };
@@ -124,14 +139,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         mList.addOnItemTouchListener(new RecyclerItemClickListener(MainActivity.this, mList ,new RecyclerItemClickListener.OnItemClickListener() {
                     @Override public void onItemClick(View view, int position) {
                         // do whatever
-                        Uri uri = Uri.parse("https://whoscall.com/zh-TW/tw/"+myDataSet.get(position).getPhoneNum());
+                        /*Uri uri = Uri.parse("https://whoscall.com/zh-TW/tw/"+myDataSet.get(position).getPhoneNum());
                         CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
                         CustomTabsIntent customTabsIntent = builder.build();
-                        customTabsIntent.launchUrl(MainActivity.this, uri);
-                    }
-
-                    @Override public void onLongItemClick(View view, int position) {
-                        // do whatever
+                        customTabsIntent.launchUrl(MainActivity.this, uri);*/
                         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                         ClipData clip = ClipData.newPlainText("PhoneNumber",myDataSet.get(position).getPhoneNum());
                         clipboard.setPrimaryClip(clip);
@@ -192,7 +203,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
-        TextView mailTextView = (TextView) findViewById(R.id.textView);
+        TextView mailTextView = (TextView) findViewById(R.id.emailText);
         mailTextView.setText(user==null?"":user.getEmail());
 
         MenuItem search = menu.findItem(R.id.search);
@@ -280,6 +291,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     })
                     .show();
         } else if (id == R.id.nav_logout) {
+            final DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference(user.getUid());
+            reference_contacts.child("Devices").child(Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID)).removeValue();
             mAuth.signOut();
         } else if (id == R.id.nav_about_page) {
             startActivity(new Intent(MainActivity.this, MyAboutPage.class));
@@ -294,7 +307,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void onStart() {
         super.onStart();
         mAuth.addAuthStateListener(mAuthListener);
-        CustomTabsClient.connectAndInitialize(this, "com.android.chrome");
+        //CustomTabsClient.connectAndInitialize(this, "com.android.chrome");
     }
 
     @Override
