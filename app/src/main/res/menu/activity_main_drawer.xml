@@ -3,13 +3,21 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_admin"
-            android:icon="@drawable/ic_security_black_24dp"
-            android:title="Admin" />
+            android:id="@+id/nav_blacklist"
+            android:icon="@drawable/ic_block_24dp"
+            android:title="Blacklist" />
         <item
-            android:id="@+id/nav_settings"
+            android:id="@+id/nav_notification"
             android:icon="@drawable/ic_settings_black_24dp"
-            android:title="Settings" />
+            android:title="@string/notification_of_off" />
+        <item
+            android:id="@+id/nav_device"
+            android:icon="@drawable/ic_devices_black_24dp"
+            android:title="Devices" />
+        <item
+            android:id="@+id/nav_pwd"
+            android:icon="@drawable/ic_security_black_24dp"
+            android:title="Update password" />
         <item
             android:id="@+id/nav_logout"
             android:icon="@drawable/ic_perm_identity_black_24dp"

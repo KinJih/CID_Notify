@@ -20,4 +20,7 @@ public class Record {
     public String getDate() {
         return date;
     }
+    public void setNumber_info(String number_info) {
+        this.number_info = number_info;
+    }
 }

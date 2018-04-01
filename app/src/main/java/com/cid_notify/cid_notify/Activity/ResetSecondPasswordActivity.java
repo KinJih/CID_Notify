@@ -4,7 +4,6 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 
@@ -24,7 +23,6 @@ import android.widget.Toast;
 
 import com.cid_notify.cid_notify.Model.AdminData;
 import com.cid_notify.cid_notify.R;
-import com.cid_notify.cid_notify.Util.EncryptUtil;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -162,7 +160,7 @@ public class ResetSecondPasswordActivity extends AppCompatActivity {
         }
     }
     private  void resetDialog(final DatabaseReference reference_contacts,final String cellphone,final String birthday){
-        final View editDialog = LayoutInflater.from(ResetSecondPasswordActivity.this).inflate(R.layout.second_password_dailog, null);
+        final View editDialog = LayoutInflater.from(ResetSecondPasswordActivity.this).inflate(R.layout.second_password_dialog, null);
         new AlertDialog.Builder(ResetSecondPasswordActivity.this)
                 .setTitle("Reset")
                 .setView(editDialog)

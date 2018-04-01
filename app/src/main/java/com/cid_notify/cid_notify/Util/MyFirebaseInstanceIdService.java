@@ -25,7 +25,7 @@ public class MyFirebaseInstanceIdService extends FirebaseInstanceIdService{
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if(user!=null){
             DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(user.getUid());
-            databaseReference.child(Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID)).setValue(refreshedToken);
+            databaseReference.child("Devices").child(Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID)).child("Token").setValue(refreshedToken);
         }
     }
 }

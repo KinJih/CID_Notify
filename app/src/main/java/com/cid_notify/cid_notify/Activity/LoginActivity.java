@@ -3,6 +3,7 @@ package com.cid_notify.cid_notify.Activity;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -36,6 +37,7 @@ import java.util.Locale;
 
 import android.content.Intent;
 
+import com.cid_notify.cid_notify.Model.Device;
 import com.cid_notify.cid_notify.R;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -253,14 +255,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         if (user.isEmailVerified()) {
             Toast.makeText(LoginActivity.this, R.string.auth_success, Toast.LENGTH_SHORT).show();
 
-            Calendar c = Calendar.getInstance();
             String SID = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINESE);
             DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(user.getUid());
-            databaseReference.child("Devices").child(SID).child("Token").setValue(FirebaseInstanceId.getInstance().getToken());
-            databaseReference.child("Devices").child(SID).child("Model").setValue(Build.MODEL);
-            databaseReference.child("Devices").child(SID).child("Login_Time").setValue(df.format(c.getTime()));
+            Device device= new Device(FirebaseInstanceId.getInstance().getToken(),SID);
+            databaseReference.child("Devices").child(SID).setValue(device);
 
             startActivity(new Intent(LoginActivity.this, MainActivity.class));
             finish();

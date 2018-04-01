@@ -1,7 +1,6 @@
 package com.cid_notify.cid_notify.Util;
 
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
@@ -13,7 +12,6 @@ import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import com.cid_notify.cid_notify.Model.Record;
 import com.cid_notify.cid_notify.R;
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
@@ -48,7 +46,9 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> implem
                 } else {
                     ArrayList<Record> filteredList = new ArrayList<>();
                     for (Record record : mData) {
-                        if (record.getPhoneNum().toLowerCase().contains(charString) || record.getNumber_info().toLowerCase().contains(charString)) {
+                        if (record.getPhoneNum().toLowerCase().contains(charString)
+                                || record.getNumber_info().toLowerCase().contains(charString)
+                                || record.getDate().toLowerCase().contains(charString)) {
                             filteredList.add(record);
                         }
                     }
@@ -107,7 +107,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> implem
 
     @Override
     public int getItemCount() {
-        return mFilterData==null?0:mFilterData.size();
+        return mFilterData.size();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {

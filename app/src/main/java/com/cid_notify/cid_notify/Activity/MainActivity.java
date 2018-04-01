@@ -1,17 +1,17 @@
 package com.cid_notify.cid_notify.Activity;
 
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
+import android.Manifest;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.customtabs.CustomTabsClient;
-import android.support.customtabs.CustomTabsIntent;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -22,33 +22,28 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
-import android.text.TextUtils;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.content.Intent;
-
-import com.cid_notify.cid_notify.Model.AdminData;
 import com.cid_notify.cid_notify.Model.Record;
 import com.cid_notify.cid_notify.R;
 import com.cid_notify.cid_notify.Util.DensityUtil;
-import com.cid_notify.cid_notify.Util.EncryptUtil;
 import com.cid_notify.cid_notify.Util.MyAdapter;
-import com.cid_notify.cid_notify.Util.MyFirebaseInstanceIdService;
 import com.cid_notify.cid_notify.Util.RecyclerItemClickListener;
+import com.cid_notify.cid_notify.Util.SecPwdUtil;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Calendar;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.Locale;
-
+import java.util.Map;
 import com.gavin.com.library.listener.GroupListener;
 import com.gavin.com.library.StickyDecoration;
 import android.support.v7.widget.RecyclerView;
@@ -61,11 +56,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private ArrayList<Record> myDataSet = new ArrayList<>();
     private MyAdapter myAdapter;
+    private Map<String, String> map;
+    private int permission;
+    private SharedPreferences pref;
+    private NavigationView navigationView;
+    private DatabaseReference reference_contacts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
-        setContentView(com.cid_notify.cid_notify.R.layout.activity_main);
+        setContentView(R.layout.activity_main);
         RecyclerView  mList = (RecyclerView) findViewById(R.id.my_recycler_view);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -77,8 +78,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS);
 
         mList.hasFixedSize();
         mList.setNestedScrollingEnabled(true);
@@ -95,24 +98,33 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     startActivity(new Intent(MainActivity.this, LoginActivity.class));
                     finish();
                 } else {
-                    getData();
-                    final DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference(user.getUid());
-                    reference_contacts.child("Telephone").addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-                            Toast.makeText(MainActivity.this, R.string.failed, Toast.LENGTH_SHORT).show();
-                        }
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            TextView teleTextView = (TextView) findViewById(R.id.telephoneText);
-                            teleTextView.setText(String.valueOf(dataSnapshot.getValue()));
-                            reference_contacts.removeEventListener(this);
-                        }
-                    });
+                    reference_contacts = FirebaseDatabase.getInstance().getReference(user.getUid());
+                    if (permission != PackageManager.PERMISSION_GRANTED) {//未取得權限，向使用者要求允許權限
+                        ActivityCompat.requestPermissions( MainActivity.this, new String[]{Manifest.permission.READ_CONTACTS}, 1);
+                    }else{//已有權限，可進行檔案存取
+                        readContacts();
+                        getData();
+                        reference_contacts.child("Telephone").addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+                                Toast.makeText(MainActivity.this, R.string.failed, Toast.LENGTH_SHORT).show();
+                            }
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                TextView teleTextView = (TextView) findViewById(R.id.telephoneText);
+                                teleTextView.setText(String.valueOf(dataSnapshot.getValue()));
+                                TextView mailTextView = (TextView) findViewById(R.id.emailText);
+                                mailTextView.setText(user.getEmail());
+                                reference_contacts.removeEventListener(this);
+                            }
+                        });
+                    }
                 }
             }
         };
+        mAuth.addAuthStateListener(mAuthListener);
 
+        pref = getSharedPreferences("Settings", MODE_PRIVATE);
         final Calendar c = Calendar.getInstance();
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINESE);
         final String formatToday = df.format(c.getTime());
@@ -138,15 +150,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         mList.addItemDecoration(decoration);
         mList.addOnItemTouchListener(new RecyclerItemClickListener(MainActivity.this, mList ,new RecyclerItemClickListener.OnItemClickListener() {
                     @Override public void onItemClick(View view, int position) {
-                        // do whatever
-                        /*Uri uri = Uri.parse("https://whoscall.com/zh-TW/tw/"+myDataSet.get(position).getPhoneNum());
-                        CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
-                        CustomTabsIntent customTabsIntent = builder.build();
-                        customTabsIntent.launchUrl(MainActivity.this, uri);*/
-                        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                        ClipData clip = ClipData.newPlainText("PhoneNumber",myDataSet.get(position).getPhoneNum());
+                        Intent intent = new Intent(Intent.ACTION_DIAL);
+                        Uri data = Uri.parse("tel:" +myDataSet.get(position).getPhoneNum());
+                        intent.setData(data);
+                        startActivity(intent);
+                        /*ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                        ClipData clip = ClipData.newPlainText("PhoneNumber",);
                         clipboard.setPrimaryClip(clip);
-                        Toast.makeText(MainActivity.this, R.string.action_copy_to_clipboard, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, R.string.action_copy_to_clipboard, Toast.LENGTH_SHORT).show();*/
                     }
                 })
         );
@@ -164,10 +175,63 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         getData();
     }
 
-    public void getData() {
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if(requestCode==1) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                //取得聯絡人權限，進行存取
+                readContacts();
+                getData();
+            } else {
+                //使用者拒絕權限，顯示對話框告知
+                new AlertDialog.Builder(this)
+                        .setMessage("必須允許聯絡人權限才能顯示資料")
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                finish();
+                            }
+                        })
+                        .show();
+            }
+        }
+    }
+
+    private void readContacts(){
+        Cursor contacts_name = getContentResolver().query(
+                ContactsContract.Contacts.CONTENT_URI,
+                null,
+                null,
+                null,
+                null);
+        map = new HashMap<>();
+        while (contacts_name.moveToNext()) {
+            String phoneNumber = "";
+            long id = contacts_name.getLong(
+                    contacts_name.getColumnIndex(ContactsContract.Contacts._ID));
+            Cursor contacts_number = getContentResolver().query(
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    null,
+                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID
+                            + "=" + Long.toString(id),
+                    null,
+                    null);
+
+            while (contacts_number.moveToNext()) {
+                phoneNumber = contacts_number
+                        .getString(contacts_number.getColumnIndex(
+                                ContactsContract.CommonDataKinds.Phone.NUMBER));
+            }
+            contacts_number.close();
+            String name = contacts_name.getString(contacts_name
+                    .getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+            map.put(phoneNumber.replace(" ","").replace("-",""), name);
+        }
+    }
+
+    private void getData() {
         Log.d("RDB", "ReadDB");
         mSwipeRefreshLayout.setRefreshing(true);
-        final DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference(user.getUid());
         reference_contacts.child("Records").orderByChild("date").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onCancelled(DatabaseError databaseError) {
@@ -179,6 +243,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 myDataSet.clear();
                 for (DataSnapshot ds : dataSnapshot.getChildren()) {
                     Record record = ds.getValue(Record.class);
+                    if(map.get(record.getPhoneNum())!=null)record.setNumber_info((map.get(record.getPhoneNum())));
                     myDataSet.add(record);
                 }
                 Collections.reverse(myDataSet);
@@ -199,22 +264,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
-        TextView mailTextView = (TextView) findViewById(R.id.emailText);
-        mailTextView.setText(user==null?"":user.getEmail());
+
+        navigationView.getMenu().findItem(R.id.nav_notification).setTitle(getResources().getString(
+                R.string.notification_of_off,pref.getBoolean("Notification",true)?getString(R.string.on):getString(R.string.off)));
 
         MenuItem search = menu.findItem(R.id.search);
         SearchView searchView = (SearchView) MenuItemCompat.getActionView(search);
+        searchView.setMaxWidth(Integer.MAX_VALUE);
         search(searchView);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -229,7 +296,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                if (myAdapter!=null)myAdapter.getFilter().filter(newText);
+                myAdapter.getFilter().filter(newText);
                 return true;
             }
         });
@@ -237,64 +304,30 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_settings) {
-            startActivity(new Intent(MainActivity.this, DevicesActivity.class));
-        } else if (id == R.id.nav_admin) {
-            final View editDialog = LayoutInflater.from(MainActivity.this).inflate(R.layout.second_password_dailog, null);
-            new AlertDialog.Builder(MainActivity.this)
-                    .setView(editDialog)
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            EditText editText = (EditText) editDialog.findViewById(R.id.second_password_text);
-                            final String secPwd = editText.getText().toString();
-                            if(TextUtils.isEmpty(secPwd)){
-                                Toast.makeText(getApplicationContext(), R.string.error_field_required, Toast.LENGTH_SHORT).show();
-                            } else {
-                                final DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference(user.getUid());
-                                reference_contacts.child("Admin").addListenerForSingleValueEvent(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(DataSnapshot dataSnapshot) {
-                                        AdminData adminData = dataSnapshot.getValue(AdminData.class);
-                                        String pwdSha=EncryptUtil.pwd2sha(secPwd,adminData.getcellphone(),adminData.getbirthday());
-                                        if (pwdSha.equals(adminData.getsecondPassword())){
-                                            startActivity(new Intent(MainActivity.this, UpdatePasswordActivity.class));
-                                        }else{
-                                            Toast.makeText(MainActivity.this, R.string.error_incorrect_password, Toast.LENGTH_SHORT).show();
-                                        }
-                                        reference_contacts.removeEventListener(this);
-                                    }
-
-                                    @Override
-                                    public void onCancelled(DatabaseError databaseError) {
-                                        Toast.makeText(MainActivity.this, R.string.failed, Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                            }
-                        }
-                    })
-                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-
-                        }
-                    })
-                    .setNeutralButton("Forget", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            startActivity(new Intent(MainActivity.this, ResetSecondPasswordActivity.class));
-                        }
-                    })
-                    .show();
-        } else if (id == R.id.nav_logout) {
-            final DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference(user.getUid());
+        if (id==R.id.nav_blacklist){
+            SecPwdUtil.checkSecPwd(MainActivity.this,user,0);
+        }else if(id==R.id.nav_notification){
+            boolean noti = pref.getBoolean("Notification",true);
+            if (noti){
+                Toast.makeText(MainActivity.this,R.string.off,Toast.LENGTH_SHORT).show();
+            }else{
+                Toast.makeText(MainActivity.this,R.string.on,Toast.LENGTH_SHORT).show();
+            }
+            pref.edit().putBoolean("Notification",!noti).apply();
+            navigationView.getMenu().findItem(R.id.nav_notification).setTitle(getResources().getString(
+                    R.string.notification_of_off,!noti?getString(R.string.on):getString(R.string.off)));
+        }else if (id == R.id.nav_device) {
+            SecPwdUtil.checkSecPwd(MainActivity.this, user, 1);
+        }else if (id == R.id.nav_pwd) {
+            SecPwdUtil.checkSecPwd(MainActivity.this,user,2);
+        }else if (id == R.id.nav_logout) {
             reference_contacts.child("Devices").child(Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID)).removeValue();
             mAuth.signOut();
-        } else if (id == R.id.nav_about_page) {
+        }else if (id == R.id.nav_about_page) {
             startActivity(new Intent(MainActivity.this, MyAboutPage.class));
         }
 
@@ -304,17 +337,31 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     }
 
     @Override
-    public void onStart() {
+    protected void onStart() {
         super.onStart();
-        mAuth.addAuthStateListener(mAuthListener);
-        //CustomTabsClient.connectAndInitialize(this, "com.android.chrome");
+        if (user!=null){
+            reference_contacts.child("Devices").child(Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID))
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if(dataSnapshot.child("isBlock").exists()) {
+                        reference_contacts.child("Devices").child(Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID)).removeValue();
+                        mAuth.signOut();
+                        reference_contacts.removeEventListener(this);
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Toast.makeText(MainActivity.this, R.string.failed, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
-        if (mAuthListener != null) {
-            mAuth.removeAuthStateListener(mAuthListener);
-        }
+    public void onDestroy() {
+        super.onDestroy();
+        mAuth.removeAuthStateListener(mAuthListener);
     }
 }

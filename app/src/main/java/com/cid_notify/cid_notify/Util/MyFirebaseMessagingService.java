@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -23,19 +24,20 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         // TODO(developer): Handle FCM messages here.
         // Not getting messages here? See why this may be: https://goo.gl/39bRNJ
         Log.d("MT", "From: " + remoteMessage.getFrom());
+        SharedPreferences pref = getSharedPreferences("Settings", MODE_PRIVATE);
 
         // Check if message contains a data payload.
-        if (remoteMessage.getData().size() > 0) {
+        if (remoteMessage.getData().size() > 0 && pref.getBoolean("Notification",true)) {
             Log.d("MT", "Message data payload: " + remoteMessage.getData());
-            String body = remoteMessage.getData().get("phoneNum")+" "+getString(R.string.arrow)+" "+remoteMessage.getData().get("CallTo");
-            String title = getString(R.string.new_call)+" : "+remoteMessage.getData().get("number_info");
+            String body = String.format(getString(R.string.arrow),remoteMessage.getData().get("phoneNum"),remoteMessage.getData().get("CallTo"));
+            String title = String.format(getString(R.string.new_call),remoteMessage.getData().get("number_info"));
             sendNotification(body,title);
         }
 
         // Check if message contains a notification payload.
-        if (remoteMessage.getNotification() != null) {
+        if (remoteMessage.getNotification() != null && pref.getBoolean("Notification",true)) {
             Log.d("MT", "Message Notification Body: " + remoteMessage.getNotification().getBody());
-            //sendNotification(remoteMessage.getNotification().getBody(),remoteMessage.getNotification().getTitle());
+            sendNotification(remoteMessage.getNotification().getBody(),remoteMessage.getNotification().getTitle());
         }
 
     }
