@@ -17,6 +17,7 @@ public class Record {
     public String getTime(){
         return time.substring(0,5);
     }
+    public String getFullTime(){return time;}
     public String getDate() {
         return date;
     }

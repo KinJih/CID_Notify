@@ -165,9 +165,9 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
 
     public void showAlert(){
         new AlertDialog.Builder(SignUpActivity.this)
-                .setTitle("*IMPORTANT*")
-                .setMessage("You must use a second password when you need to change your password and cancel notification feature of an appliance. \n\nIf you accidentally forget the second password, you cna reset it through your cellphone number and birthday.")
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                .setTitle(R.string.important)
+                .setMessage(R.string.second_password_description)
+                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                     }}).show();
@@ -259,6 +259,7 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
                             DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference(user.getUid());
                             databaseReference.child("E-Mail").setValue(user.getEmail());
                             databaseReference.child("Admin").setValue(new AdminData(secondPassword,cellphone,birthday));
+                            databaseReference.child("AutoBlock").setValue(false);
                             Toast.makeText(SignUpActivity.this, getString(R.string.send_verification_mail), Toast.LENGTH_LONG).show();
                             finish();
                         } else {

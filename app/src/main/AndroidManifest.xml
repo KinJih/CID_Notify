@@ -65,8 +65,13 @@
             android:name=".Activity.ResetSecondPasswordActivity"
             android:label="@string/title_activity_reset_second_password">
         </activity>
-        <activity android:name=".Activity.BlackListActivity">
+        <activity android:name=".Activity.BlackListActivity"
+                  android:label="@string/title_activity_black_list">
         </activity>
+
+        <meta-data
+            android:name="preloaded_fonts"
+            android:resource="@array/preloaded_fonts"/>
     </application>
 
 </manifest>

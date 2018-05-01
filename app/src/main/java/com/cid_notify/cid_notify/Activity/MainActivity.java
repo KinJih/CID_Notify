@@ -1,6 +1,7 @@
 package com.cid_notify.cid_notify.Activity;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -22,20 +23,25 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.content.Intent;
+
+import com.cid_notify.cid_notify.Model.AdminData;
 import com.cid_notify.cid_notify.Model.Record;
 import com.cid_notify.cid_notify.R;
 import com.cid_notify.cid_notify.Util.DensityUtil;
+import com.cid_notify.cid_notify.Util.EncryptUtil;
 import com.cid_notify.cid_notify.Util.MyAdapter;
 import com.cid_notify.cid_notify.Util.RecyclerItemClickListener;
-import com.cid_notify.cid_notify.Util.SecPwdUtil;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -149,18 +155,30 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 .build();
         mList.addItemDecoration(decoration);
         mList.addOnItemTouchListener(new RecyclerItemClickListener(MainActivity.this, mList ,new RecyclerItemClickListener.OnItemClickListener() {
-                    @Override public void onItemClick(View view, int position) {
-                        Intent intent = new Intent(Intent.ACTION_DIAL);
-                        Uri data = Uri.parse("tel:" +myDataSet.get(position).getPhoneNum());
-                        intent.setData(data);
-                        startActivity(intent);
-                        /*ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                        ClipData clip = ClipData.newPlainText("PhoneNumber",);
-                        clipboard.setPrimaryClip(clip);
-                        Toast.makeText(MainActivity.this, R.string.action_copy_to_clipboard, Toast.LENGTH_SHORT).show();*/
-                    }
-                })
-        );
+            @Override
+            public void onItemClick(View view, int position) {
+                Intent intent = new Intent(Intent.ACTION_DIAL);
+                Uri data = Uri.parse("tel:" +myDataSet.get(position).getPhoneNum());
+                intent.setData(data);
+                startActivity(intent);
+                }
+
+            @Override
+            public void onLongItemClick(View view, final int position) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setMessage(R.string.delete)
+                        .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Record record = myDataSet.get(position);
+                                reference_contacts.child("Records").child(record.getDate()+" "+record.getFullTime()).removeValue();
+                                myAdapter.deleteRecord(position);
+                            }
+                        }).setNegativeButton(R.string.cancel, null)
+                        .show();
+            }
+        }));
+
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -185,8 +203,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             } else {
                 //使用者拒絕權限，顯示對話框告知
                 new AlertDialog.Builder(this)
-                        .setMessage("必須允許聯絡人權限才能顯示資料")
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        .setMessage(R.string.contact_permission)
+                        .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 finish();
@@ -225,7 +243,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             contacts_number.close();
             String name = contacts_name.getString(contacts_name
                     .getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-            map.put(phoneNumber.replace(" ","").replace("-",""), name);
+            if(!phoneNumber.equals(""))map.put(phoneNumber.replace(" ","").replace("-",""), name);
         }
     }
 
@@ -309,7 +327,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         int id = item.getItemId();
 
         if (id==R.id.nav_blacklist){
-            SecPwdUtil.checkSecPwd(MainActivity.this,user,0);
+            startActivity(new Intent(new Intent(MainActivity.this, BlackListActivity.class)));
         }else if(id==R.id.nav_notification){
             boolean noti = pref.getBoolean("Notification",true);
             if (noti){
@@ -321,9 +339,51 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             navigationView.getMenu().findItem(R.id.nav_notification).setTitle(getResources().getString(
                     R.string.notification_of_off,!noti?getString(R.string.on):getString(R.string.off)));
         }else if (id == R.id.nav_device) {
-            SecPwdUtil.checkSecPwd(MainActivity.this, user, 1);
+            startActivity(new Intent(new Intent(MainActivity.this, DevicesActivity.class)));
         }else if (id == R.id.nav_pwd) {
-            SecPwdUtil.checkSecPwd(MainActivity.this,user,2);
+            final View editDialog = LayoutInflater.from(this).inflate(R.layout.second_password_dialog, null);
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.second_password)
+                    .setView(editDialog)
+                    .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            EditText editText = (EditText) editDialog.findViewById(R.id.second_password_text);
+                            final String secPwd = editText.getText().toString();
+                            if(TextUtils.isEmpty(secPwd)){
+                                Toast.makeText(MainActivity.this, R.string.error_field_required, Toast.LENGTH_SHORT).show();
+                            } else {
+                                final DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference(user.getUid());
+                                reference_contacts.child("Admin").addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(DataSnapshot dataSnapshot) {
+                                        AdminData adminData = dataSnapshot.getValue(AdminData.class);
+                                        String pwdSha= EncryptUtil.pwd2sha(secPwd,adminData.getcellphone(),adminData.getbirthday());
+                                        if (pwdSha.equals(adminData.getsecondPassword())){
+
+                                        }else{
+                                            Toast.makeText(MainActivity.this, R.string.error_incorrect_password, Toast.LENGTH_SHORT).show();
+                                        }
+                                        reference_contacts.removeEventListener(this);
+                                    }
+
+                                    @Override
+                                    public void onCancelled(DatabaseError databaseError) {
+                                        Toast.makeText(MainActivity.this, R.string.failed, Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            }
+                        }
+                    })
+                    .setNegativeButton(R.string.cancel, null)
+                    .setNeutralButton(R.string.forgot, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startActivity(new Intent(MainActivity.this, ResetSecondPasswordActivity.class));
+
+                        }
+                    })
+                    .show();
         }else if (id == R.id.nav_logout) {
             reference_contacts.child("Devices").child(Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID)).removeValue();
             mAuth.signOut();

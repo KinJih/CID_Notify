@@ -5,7 +5,7 @@
         <item
             android:id="@+id/nav_blacklist"
             android:icon="@drawable/ic_block_24dp"
-            android:title="Blacklist" />
+            android:title="@string/title_activity_black_list" />
         <item
             android:id="@+id/nav_notification"
             android:icon="@drawable/ic_settings_black_24dp"
@@ -13,18 +13,18 @@
         <item
             android:id="@+id/nav_device"
             android:icon="@drawable/ic_devices_black_24dp"
-            android:title="Devices" />
+            android:title="@string/title_activity_devices" />
         <item
             android:id="@+id/nav_pwd"
             android:icon="@drawable/ic_security_black_24dp"
-            android:title="Update password" />
+            android:title="@string/title_activity_update_password" />
         <item
             android:id="@+id/nav_logout"
             android:icon="@drawable/ic_perm_identity_black_24dp"
-            android:title="Log out" />
+            android:title="@string/logout" />
         <item
             android:id="@+id/nav_about_page"
             android:icon="@drawable/ic_error_outline_black_24dp"
-            android:title="About Us" />
+            android:title="@string/title_activity_about" />
     </group>
 </menu>

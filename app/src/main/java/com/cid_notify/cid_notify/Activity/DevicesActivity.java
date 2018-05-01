@@ -76,15 +76,19 @@ public class DevicesActivity extends AppCompatActivity {
             @Override
             public void onItemClick(View view, final int position) {
                 new AlertDialog.Builder(DevicesActivity.this)
-                        .setTitle("Logout this device?")
-                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        .setTitle(R.string.logout_this_device)
+                        .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 reference_contacts.child("Devices").child(devices.get(position).getsid()).child("isBlock").setValue(true);
                                 devices.remove(position);
                                 adapter.notifyDataSetChanged();
                             }
-                        }).setNegativeButton("No",null).show();
+                        }).setNegativeButton(R.string.no,null).show();
+            }
+            @Override
+            public void onLongItemClick(View view, int position) {
+
             }
         }));
     }

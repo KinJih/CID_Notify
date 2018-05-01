@@ -2,7 +2,6 @@
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center_horizontal"
@@ -43,11 +42,15 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:fontFamily="cursive"
+                android:layout_marginBottom="24dp"
+                android:layout_marginTop="24dp"
+                android:fontFamily="@font/mclaren"
                 android:text="CID_Notify"
                 android:textAlignment="center"
-                android:textColor="@color/colorAccent"
-                android:textSize="50sp"/>
+                android:textAllCaps="false"
+                android:textColor="?attr/colorAccent"
+                android:textSize="54sp"
+                android:textStyle="bold"/>
 
             <android.support.design.widget.TextInputLayout
                 android:layout_width="match_parent"
@@ -90,6 +93,7 @@
                 android:layout_marginTop="16dp"
                 android:text="@string/title_activity_log_in"
                 android:textStyle="bold" />
+
             <Button
                 android:id="@+id/btn_reset_password"
                 android:layout_width="fill_parent"
@@ -98,7 +102,8 @@
                 android:background="@null"
                 android:text="@string/btn_forgot_password"
                 android:textAllCaps="false"
-                android:textColor="@color/colorAccent" />
+                android:textColor="@color/colorAccent"
+                />
             <Button
                 android:id="@+id/btn_signup"
                 android:layout_width="fill_parent"

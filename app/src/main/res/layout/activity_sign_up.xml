@@ -34,6 +34,7 @@
             android:id="@+id/email_login_form"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:paddingTop="12dp"
             android:orientation="vertical">
 
             <android.support.design.widget.TextInputLayout
@@ -89,7 +90,7 @@
                     android:id="@+id/second_password"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Second password"
+                    android:hint="@string/second_password"
                     android:imeOptions="actionNext"
                     android:inputType="textPassword"
                     android:maxLines="1"
@@ -104,7 +105,7 @@
                     android:id="@+id/cellphone_number"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Cellphone number"
+                    android:hint="@string/cellphone_number"
                     android:imeOptions="actionNext"
                     android:inputType="phone"
                     android:maxLines="1"
@@ -119,7 +120,7 @@
                     android:id="@+id/birthday"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Birthday e.g. 19700101"
+                    android:hint="@string/birthday"
                     android:imeOptions="actionDone"
                     android:inputType="number"
                     android:imeActionLabel="@string/title_activity_sign_up"

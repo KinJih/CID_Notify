@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import com.cid_notify.cid_notify.Model.Record;
 import com.cid_notify.cid_notify.R;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView;
 
 import java.util.ArrayList;
@@ -22,13 +28,34 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> implem
     private ArrayList<Record> mData;
     private ArrayList<Record> mFilterData;
     private String charString="";
+    private ArrayList<String> keyWord;
 
     public MyAdapter(ArrayList<Record> mData) {
         this.mData = mData;
         mFilterData = mData;
+
+        keyWord = new ArrayList<>();
+        final DatabaseReference reference_contacts = FirebaseDatabase.getInstance().getReference("keyword");
+        reference_contacts.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot ds: dataSnapshot.getChildren()){
+                    keyWord.add(ds.getValue(String.class));
+                }
+                reference_contacts.removeEventListener(this);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d("Error here",databaseError.getDetails()+"|"+databaseError.getMessage());
+            }
+        });
     }
-    public ArrayList<Record> getmFilterData(){
-        return mFilterData;//let stickyDecoration can change with Filter
+    public ArrayList<Record> getmFilterData(){ return mFilterData;/*let stickyDecoration can change with Filter*/ }
+
+    public void deleteRecord(int position){
+        mData.remove(position);
+        notifyDataSetChanged();
     }
     @NonNull
     @Override
@@ -81,10 +108,12 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> implem
         Record record = mFilterData.get(position);
         holder.setValues(record);
 
-        if (record.getNumber_info().contains("市場")||record.getNumber_info().contains("推銷")){
-           holder.mImageView.setImageResource(R.drawable.ic_cid_service_red);
-        }else{
-            holder.mImageView.setImageResource(R.drawable.ic_cid_service_green);
+        for (String word:keyWord) {
+            if (record.getNumber_info().contains(word)){
+                holder.mImageView.setImageResource(R.drawable.ic_cid_service_red);
+            }else{
+                holder.mImageView.setImageResource(R.drawable.ic_cid_service_green);
+            }
         }
 
         String num = record.getPhoneNum().toLowerCase();

@@ -162,9 +162,9 @@ public class ResetSecondPasswordActivity extends AppCompatActivity {
     private  void resetDialog(final DatabaseReference reference_contacts,final String cellphone,final String birthday){
         final View editDialog = LayoutInflater.from(ResetSecondPasswordActivity.this).inflate(R.layout.second_password_dialog, null);
         new AlertDialog.Builder(ResetSecondPasswordActivity.this)
-                .setTitle("Reset")
+                .setTitle(R.string.reset)
                 .setView(editDialog)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         EditText editText = (EditText) editDialog.findViewById(R.id.second_password_text);

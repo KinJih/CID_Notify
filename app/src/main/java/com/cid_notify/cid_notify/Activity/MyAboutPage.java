@@ -35,7 +35,7 @@ public class MyAboutPage extends AppCompatActivity {
         View aboutPage = new AboutPage(this)
                 .isRTL(false)
                 .setDescription("Hi, we are CID_Notify team.")
-                .addItem(new Element().setTitle("Version 1.4"))
+                .addItem(new Element().setTitle("Version 1.0-Release"))
                 .addGroup("Connect with us")
                 .addEmail("u0424035@nkfust.edu.tw")
                 .addWebsite("https://github.com/KinJih/CID_Notify")
@@ -50,16 +50,9 @@ public class MyAboutPage extends AppCompatActivity {
         Element copyRightsElement = new Element();
         final String copyrights = String.format(getString(R.string.copy_right), Calendar.getInstance().get(Calendar.YEAR));
         copyRightsElement.setTitle(copyrights);
-       //copyRightsElement.setIconDrawable(R.drawable.about_icon_copy_right);
         copyRightsElement.setIconTint(mehdi.sakout.aboutpage.R.color.about_item_icon_color);
         copyRightsElement.setIconNightTint(android.R.color.white);
         copyRightsElement.setGravity(Gravity.CENTER);
-        copyRightsElement.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(MyAboutPage.this, copyrights, Toast.LENGTH_SHORT).show();
-            }
-        });
         return copyRightsElement;
     }
 }

@@ -54,9 +54,9 @@ public class BlackListActivity extends AppCompatActivity {
             public void onClick(View v) {
                 final View editDialog = LayoutInflater.from(BlackListActivity.this).inflate(R.layout.black_list_dialog, null);
                 new AlertDialog.Builder(BlackListActivity.this)
-                        .setTitle("Block this number")
+                        .setTitle(R.string.block_this_number)
                         .setView(editDialog)
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 EditText editText = (EditText) editDialog.findViewById(R.id.black_list_text);
@@ -72,7 +72,7 @@ public class BlackListActivity extends AppCompatActivity {
                                     adapter.notifyDataSetChanged();
                                 }
                             }
-                        }).setNegativeButton("Cancel", null).show();
+                        }).setNegativeButton(R.string.cancel, null).show();
             }
         });
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -145,11 +145,6 @@ public class BlackListActivity extends AppCompatActivity {
             }
         }
 
-        public void addOne(String[] map){
-            mDataset.add(map);
-            notifyDataSetChanged();
-        }
-
         // Provide a suitable constructor (depends on the kind of dataset)
         public BlackListAdapter(ArrayList<String[]> myDataset, DatabaseReference myRef, Context context) {
             mDataset = myDataset;
@@ -173,9 +168,9 @@ public class BlackListActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     final View editDialog = LayoutInflater.from(context).inflate(R.layout.black_list_dialog, null);
                     new AlertDialog.Builder(context)
-                            .setTitle("Block this number")
+                            .setTitle(R.string.block_this_number)
                             .setView(editDialog)
-                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     EditText editText = (EditText) editDialog.findViewById(R.id.black_list_text);
@@ -189,22 +184,22 @@ public class BlackListActivity extends AppCompatActivity {
                                         notifyDataSetChanged();
                                     }
                                 }
-                            }).setNegativeButton("Cancel",null).show();
+                            }).setNegativeButton(R.string.cancel,null).show();
                 }
             });
             holder.mDelete.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     new AlertDialog.Builder(context)
-                            .setTitle("Delete?")
-                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            .setTitle(R.string.delete)
+                            .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     myRef.child("BlackList").child(mDataset.get(position)[0]).removeValue();
                                     mDataset.remove(position);
                                     notifyDataSetChanged();
                                 }
-                            }).setNegativeButton("No",null).show();
+                            }).setNegativeButton(R.string.no,null).show();
                 }
             });
         }
