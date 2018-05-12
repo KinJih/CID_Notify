@@ -61,4 +61,6 @@
     <string name="im_ready">我準備好了!</string>
     <string name="important">*重要通知*</string>
     <string name="second_password_description">當您需要更改密碼或設定某些敏感功能時，您必須使用第二道密碼。 \n\n如果您不小心忘記了第二道密碼，您可以使用手機號碼和生日進行重置。</string>
+    <string name="reset_email_failed">密碼重設信寄送失敗</string>
+    <string name="send_reset_email">將會寄出密碼重設信至您的信箱</string>
 </resources>

@@ -177,9 +177,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         if (task.isSuccessful()) {
-                            Toast.makeText(LoginActivity.this, "We have sent you instructions to reset your password!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(LoginActivity.this, R.string.send_reset_email, Toast.LENGTH_SHORT).show();
                         } else {
-                            Toast.makeText(LoginActivity.this, "Failed to send reset email!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(LoginActivity.this, R.string.reset_email_failed, Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -239,7 +239,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                         if (user != null) {
                             doVerify(user);
                         }else{
-                            Toast.makeText(LoginActivity.this, R.string.auth_failed+'!', Toast.LENGTH_SHORT).show();
+                            Toast.makeText(LoginActivity.this, R.string.auth_failed, Toast.LENGTH_SHORT).show();
                         }
                         showProgress(false);
                     } else {

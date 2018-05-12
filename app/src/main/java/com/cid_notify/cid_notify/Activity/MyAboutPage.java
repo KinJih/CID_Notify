@@ -35,7 +35,7 @@ public class MyAboutPage extends AppCompatActivity {
         View aboutPage = new AboutPage(this)
                 .isRTL(false)
                 .setDescription("Hi, we are CID_Notify team.")
-                .addItem(new Element().setTitle("Version 1.0-Release"))
+                .addItem(new Element().setTitle("Version 1.0B-Release"))
                 .addGroup("Connect with us")
                 .addEmail("u0424035@nkfust.edu.tw")
                 .addWebsite("https://github.com/KinJih/CID_Notify")

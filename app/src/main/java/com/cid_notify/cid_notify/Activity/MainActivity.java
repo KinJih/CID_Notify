@@ -170,9 +170,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                Record record = myDataSet.get(position);
+                                Record record = myAdapter.getmFilterData().get(position);
                                 reference_contacts.child("Records").child(record.getDate()+" "+record.getFullTime()).removeValue();
-                                myAdapter.deleteRecord(position);
+                                myAdapter.deleteRecord(record);
                             }
                         }).setNegativeButton(R.string.cancel, null)
                         .show();
@@ -360,7 +360,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                         AdminData adminData = dataSnapshot.getValue(AdminData.class);
                                         String pwdSha= EncryptUtil.pwd2sha(secPwd,adminData.getcellphone(),adminData.getbirthday());
                                         if (pwdSha.equals(adminData.getsecondPassword())){
-
+                                            startActivity(new Intent(MainActivity.this,UpdatePasswordActivity.class));
                                         }else{
                                             Toast.makeText(MainActivity.this, R.string.error_incorrect_password, Toast.LENGTH_SHORT).show();
                                         }

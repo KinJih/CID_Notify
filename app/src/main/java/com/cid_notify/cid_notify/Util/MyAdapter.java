@@ -53,8 +53,9 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> implem
     }
     public ArrayList<Record> getmFilterData(){ return mFilterData;/*let stickyDecoration can change with Filter*/ }
 
-    public void deleteRecord(int position){
-        mData.remove(position);
+    public void deleteRecord(Record record){
+        mData.remove(mData.indexOf(record));
+        if(mData.size()!=mFilterData.size())mFilterData.remove(mFilterData.indexOf(record));
         notifyDataSetChanged();
     }
     @NonNull

@@ -1,7 +1,5 @@
 package com.cid_notify.cid_notify.Model;
 
-import android.support.annotation.NonNull;
-
 import com.cid_notify.cid_notify.Util.EncryptUtil;
 
 public class AdminData {

@@ -64,5 +64,7 @@
     <string name="birthday">Birthday e.g.19701001</string>
     <string name="im_ready">I\'m ready!</string>
     <string name="important">*IMPORTANT*</string>
+    <string name="reset_email_failed">Failed to send reset email</string>
+    <string name="send_reset_email">We have sent you instructions to reset your password</string>
     <string name="second_password_description">You must use a second password when you need to change your password or set some sensitive feature of an appliance. \\n\\nIf you accidentally forget the second password, you cna reset it through your cellphone number and birthday.</string>
 </resources>
